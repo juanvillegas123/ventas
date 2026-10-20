@@ -1,0 +1,756 @@
+@using sistema_ventas.Models
+@{
+    ViewData["Title"] = "Punto de Venta";
+    var clientes = (List<Cliente>)ViewBag.Clientes;
+    var categorias = (List<Categoria>)ViewBag.Categorias;
+    var productos = (List<Producto>)ViewBag.Productos;
+}
+
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4 gap-2">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <a asp-action="Index" class="text-decoration-none text-muted small">
+                <i class="bi bi-arrow-left"></i> Historial de Ventas
+            </a>
+            <span class="text-muted small">/</span>
+            <span class="small fw-semibold text-dark">Nueva Venta</span>
+        </div>
+        <h1 class="h4 fw-bold text-dark mb-0">Terminal de Venta (POS)</h1>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn-minimal-outline" onclick="limpiarCarrito()">
+            <i class="bi bi-arrow-counterclockwise"></i> Reiniciar Venta
+        </button>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- ============================================== -->
+    <!-- COLUMNA IZQUIERDA: CATÁLOGO DE PRODUCTOS       -->
+    <!-- ============================================== -->
+    <div class="col-12 col-lg-7 col-xl-8">
+        <div class="card-minimal p-3 mb-3">
+            <div class="row g-2 align-items-center">
+                <!-- Buscador de productos -->
+                <div class="col-12 col-md-7">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius: 8px 0 0 8px;">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" id="busquedaProducto" class="form-control form-control-minimal border-start-0" 
+                               placeholder="Buscar producto por nombre..." style="border-radius: 0 8px 8px 0;" onkeyup="filtrarProductos()">
+                    </div>
+                </div>
+                <!-- Filtro por categoría -->
+                <div class="col-12 col-md-5">
+                    <select id="filtroCategoria" class="form-select form-select-minimal" onchange="filtrarProductos()">
+                        <option value="">Todas las categorías</option>
+                        @foreach (var cat in categorias)
+                        {
+                            <option value="@cat.Id">@cat.Nombre</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de productos -->
+        <div class="row g-3" id="gridProductos">
+            @foreach (var prod in productos)
+            {
+                var agotado = prod.Stock <= 0;
+                var precioInvariant = prod.Precio.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                <div class="col-12 col-sm-6 col-xl-4 item-producto" 
+                     data-id="@prod.Id" 
+                     data-nombre="@prod.Nombre.ToLower()" 
+                     data-nombre-display="@prod.Nombre"
+                     data-categoria="@prod.CategoriaId" 
+                     data-precio="@precioInvariant" 
+                     data-stock="@prod.Stock">
+                    <div class="card-minimal h-100 p-3 d-flex flex-column justify-content-between position-relative @(agotado ? "opacity-50" : "")"
+                         style="cursor: @(agotado ? "not-allowed" : "pointer");" 
+                         onclick="if (!@agotado.ToString().ToLower()) agregarDesdeCard(this.closest('.item-producto'))">
+                        
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <span class="badge-minimal badge-minimal-neutral">
+                                    @(prod.Categoria?.Nombre ?? "General")
+                                </span>
+                                @if (agotado)
+                                {
+                                    <span class="badge-minimal badge-minimal-danger">Sin stock</span>
+                                }
+                                else if (prod.Stock <= prod.Stock_minimo)
+                                {
+                                    <span class="badge-minimal badge-minimal-warning">Stock: @prod.Stock</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-minimal badge-minimal-success">Stock: @prod.Stock</span>
+                                }
+                            </div>
+                            <h6 class="fw-semibold text-dark mb-1">@prod.Nombre</h6>
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-end mt-3 pt-2 border-top">
+                            <div>
+                                <span class="text-muted" style="font-size: 0.72rem;">PRECIO</span>
+                                <div class="fw-bold text-dark fs-5">@prod.Precio.ToString("C")</div>
+                            </div>
+                            <button type="button" class="btn btn-sm @(agotado ? "btn-light text-muted" : "btn-dark") rounded-pill px-3 py-1"
+                                    style="font-size: 0.8rem;" @(agotado ? "disabled" : "")
+                                    onclick="event.stopPropagation(); if (!@agotado.ToString().ToLower()) agregarDesdeCard(this.closest('.item-producto'))">
+                                <i class="bi bi-plus-lg"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- COLUMNA DERECHA: CARRITO, CLIENTE Y COBRO      -->
+    <!-- ============================================== -->
+    <div class="col-12 col-lg-5 col-xl-4">
+        <div class="card-minimal p-3 sticky-top" style="top: 80px;">
+            
+            <!-- 1. SELECCIÓN DE CLIENTE -->
+            <div class="mb-3 pb-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="small fw-semibold text-uppercase text-muted" style="letter-spacing: 0.04em;">Cliente</label>
+                    <button type="button" class="btn btn-link text-decoration-none p-0 text-dark small fw-semibold" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente">
+                        <i class="bi bi-person-plus"></i> + Nuevo Cliente
+                    </button>
+                </div>
+
+                <div class="position-relative">
+                    <input type="text" id="inputBuscarCliente" class="form-control form-control-minimal" 
+                           placeholder="Escribe para buscar cliente..." oninput="filtrarClientes()" autocomplete="off">
+                    <input type="hidden" id="clienteIdSeleccionado" value="">
+
+                    <!-- Lista desplegable flotante de resultados -->
+                    <div id="listaResultadosClientes" class="list-group position-absolute w-100 shadow-sm mt-1 d-none" 
+                         style="z-index: 1050; max-height: 200px; overflow-y: auto; border: 1px solid var(--border-subtle); border-radius: 8px;">
+                        @foreach (var c in clientes)
+                        {
+                            <button type="button" class="list-group-item list-group-item-action py-2 px-3 option-cliente"
+                                    data-id="@c.Id" data-nombre="@c.Nombre" data-info="@(c.Telefono ?? c.Email ?? "")"
+                                    onclick="seleccionarCliente(@c.Id, '@c.Nombre.Replace("'", "\\'")')">
+                                <div class="fw-semibold text-dark">@c.Nombre</div>
+                                <div class="small text-muted">@(c.Telefono ?? c.Email ?? "Sin contacto")</div>
+                            </button>
+                        }
+                    </div>
+                </div>
+
+                <!-- Tarjeta de cliente seleccionado -->
+                <div id="clienteSeleccionadoCard" class="mt-2 p-2 rounded bg-light border d-none align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded-circle bg-dark text-white d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <div>
+                            <div class="fw-semibold small text-dark" id="clienteNombreDisplay"></div>
+                            <span class="text-success small" style="font-size: 0.72rem;"><i class="bi bi-check-circle-fill"></i> Seleccionado</span>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-link text-muted p-0" onclick="deseleccionarCliente()" title="Cambiar cliente">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. LISTA DEL CARRITO -->
+            <div class="mb-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <label class="small fw-semibold text-uppercase text-muted" style="letter-spacing: 0.04em;">Carrito de Compra</label>
+                    <span id="contadorItems" class="badge-minimal badge-minimal-neutral">0 ítems</span>
+                </div>
+
+                <div id="carritoItemsContainer" style="max-height: 260px; overflow-y: auto; padding-right: 4px;">
+                    <!-- Mensaje si está vacío -->
+                    <div id="carritoVacio" class="text-center py-4 text-muted">
+                        <i class="bi bi-cart3 fs-3 d-block mb-1 opacity-50"></i>
+                        <span class="small">El carrito está vacío</span>
+                    </div>
+
+                    <!-- Items dinámicos se insertan aquí -->
+                    <div id="listaItems" class="d-flex flex-column gap-2"></div>
+                </div>
+            </div>
+
+            <!-- 3. TOTALES Y PAGO -->
+            <div class="border-top pt-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small">Subtotal</span>
+                    <span class="fw-semibold text-dark" id="subtotalDisplay">$0.00</span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="fw-bold text-dark fs-6">TOTAL A PAGAR</span>
+                    <span class="fw-bold text-dark fs-4" id="totalDisplay">$0.00</span>
+                </div>
+
+                <!-- Input Monto Recibido -->
+                <div class="mb-2">
+                    <label class="small fw-semibold text-muted mb-1">Monto Recibido</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius: 8px 0 0 8px;">$</span>
+                        <input type="number" id="montoRecibido" class="form-control form-control-minimal border-start-0 fs-5 fw-bold" 
+                               placeholder="0.00" step="0.5" min="0" style="border-radius: 0 8px 8px 0;" oninput="calcularCambio()">
+                    </div>
+                </div>
+
+                <!-- Botones de monto rápido -->
+                <div class="d-flex gap-1 mb-3">
+                    <button type="button" class="btn btn-sm btn-light border flex-fill py-1 small" onclick="pagarExacto()">Exacto</button>
+                    <button type="button" class="btn btn-sm btn-light border flex-fill py-1 small" onclick="sumarRecibido(10)">+10</button>
+                    <button type="button" class="btn btn-sm btn-light border flex-fill py-1 small" onclick="sumarRecibido(20)">+20</button>
+                    <button type="button" class="btn btn-sm btn-light border flex-fill py-1 small" onclick="sumarRecibido(50)">+50</button>
+                    <button type="button" class="btn btn-sm btn-light border flex-fill py-1 small" onclick="sumarRecibido(100)">+100</button>
+                </div>
+
+                <!-- Display de Cambio (Vuelto) -->
+                <div class="p-2 rounded mb-3 d-flex justify-content-between align-items-center" id="cambioBox" style="background-color: #f4f4f5;">
+                    <span class="small fw-semibold text-muted" id="cambioLabel">Cambio a entregar:</span>
+                    <span class="fw-bold fs-5 text-dark" id="cambioDisplay">$0.00</span>
+                </div>
+
+                <!-- Botón de acción principal -->
+                <button type="button" id="btnFinalizarVenta" class="btn-minimal-dark w-100 justify-content-center py-2 fs-6 opacity-75" 
+                        onclick="procesarVenta()">
+                    <i class="bi bi-check2-circle"></i> Completar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- MODAL: CREAR NUEVO CLIENTE (INLINE)            -->
+<!-- ============================================== -->
+<div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-labelledby="modalNuevoClienteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content card-minimal border-0 shadow">
+            <div class="modal-header border-bottom py-3">
+                <h5 class="modal-title fw-bold text-dark fs-6" id="modalNuevoClienteLabel">
+                    <i class="bi bi-person-plus me-1"></i> Registrar Nuevo Cliente
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formNuevoCliente" onsubmit="guardarNuevoCliente(event)">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark">Nombre Completo *</label>
+                        <input type="text" id="nuevoClienteNombre" class="form-control form-control-minimal" required placeholder="Ej. Ana Martínez">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark">Teléfono</label>
+                        <input type="text" id="nuevoClienteTelefono" class="form-control form-control-minimal" placeholder="Ej. 78945612">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-dark">Correo Electrónico</label>
+                        <input type="email" id="nuevoClienteEmail" class="form-control form-control-minimal" placeholder="Ej. ana@correo.com">
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 pt-2">
+                        <button type="button" class="btn-minimal-outline" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn-minimal-dark" id="btnGuardarCliente">
+                            Guardar y Seleccionar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- MODAL: TICKET DE CONFIRMACIÓN DE VENTA         -->
+<!-- ============================================== -->
+<div class="modal fade" id="modalVentaExitosa" data-bs-backdrop="static" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content card-minimal border-0 shadow text-center p-4">
+            <div class="mb-3">
+                <div class="rounded-circle bg-success bg-opacity-10 text-success d-inline-flex p-3 fs-1">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+            </div>
+            <h5 class="fw-bold text-dark mb-1">¡Venta Completada!</h5>
+            <p class="text-muted small mb-3">La venta ha sido registrada y el inventario actualizado.</p>
+
+            <div class="bg-light p-3 rounded mb-3 text-start small">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Total:</span>
+                    <strong class="text-dark" id="modalTicketTotal">$0.00</strong>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="text-muted">Recibido:</span>
+                    <span class="text-dark" id="modalTicketRecibido">$0.00</span>
+                </div>
+                <div class="d-flex justify-content-between border-top pt-1">
+                    <span class="fw-bold text-dark">Cambio devuelto:</span>
+                    <strong class="text-success fs-6" id="modalTicketCambio">$0.00</strong>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <a id="btnVerTicket" href="#" class="btn-minimal-dark text-decoration-none">
+                    <i class="bi bi-receipt"></i> Ver Ticket / Imprimir
+                </a>
+                <button type="button" class="btn-minimal-outline" onclick="iniciarNuevaVenta()">
+                    <i class="bi bi-plus-lg"></i> Realizar Otra Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // ESTADO DEL CARRITO Y CLIENTE
+    let carrito = [];
+    let clienteSeleccionado = null;
+
+    // 1. GESTIÓN DEL CLIENTE
+    function filtrarClientes() {
+        const query = document.getElementById('inputBuscarCliente').value.toLowerCase().trim();
+        const lista = document.getElementById('listaResultadosClientes');
+        const items = lista.querySelectorAll('.option-cliente');
+
+        if (query.length === 0) {
+            lista.classList.add('d-none');
+            return;
+        }
+
+        let visibles = 0;
+        items.forEach(el => {
+            const nombre = el.dataset.nombre.toLowerCase();
+            const info = el.dataset.info.toLowerCase();
+            if (nombre.includes(query) || info.includes(query)) {
+                el.classList.remove('d-none');
+                visibles++;
+            } else {
+                el.classList.add('d-none');
+            }
+        });
+
+        if (visibles > 0) {
+            lista.classList.remove('d-none');
+        } else {
+            lista.classList.add('d-none');
+        }
+    }
+
+    function seleccionarCliente(id, nombre) {
+        clienteSeleccionado = { id: parseInt(id), nombre: nombre };
+        document.getElementById('clienteIdSeleccionado').value = id;
+        document.getElementById('inputBuscarCliente').value = '';
+        document.getElementById('inputBuscarCliente').classList.add('d-none');
+        document.getElementById('listaResultadosClientes').classList.add('d-none');
+
+        document.getElementById('clienteNombreDisplay').textContent = nombre;
+        document.getElementById('clienteSeleccionadoCard').classList.remove('d-none');
+        document.getElementById('clienteSeleccionadoCard').classList.add('d-flex');
+
+        validarFormularioVenta();
+    }
+
+    function deseleccionarCliente() {
+        clienteSeleccionado = null;
+        document.getElementById('clienteIdSeleccionado').value = '';
+        document.getElementById('clienteSeleccionadoCard').classList.add('d-none');
+        document.getElementById('clienteSeleccionadoCard').classList.remove('d-flex');
+        document.getElementById('inputBuscarCliente').classList.remove('d-none');
+        document.getElementById('inputBuscarCliente').focus();
+
+        validarFormularioVenta();
+    }
+
+    async function guardarNuevoCliente(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btnGuardarCliente');
+        btn.disabled = true;
+
+        const payload = {
+            nombre: document.getElementById('nuevoClienteNombre').value.trim(),
+            telefono: document.getElementById('nuevoClienteTelefono').value.trim(),
+            email: document.getElementById('nuevoClienteEmail').value.trim()
+        };
+
+        try {
+            const res = await fetch('/Ventas/CrearClienteRapido', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                const lista = document.getElementById('listaResultadosClientes');
+                const btnNuevo = document.createElement('button');
+                btnNuevo.type = 'button';
+                btnNuevo.className = 'list-group-item list-group-item-action py-2 px-3 option-cliente';
+                btnNuevo.dataset.id = data.id;
+                btnNuevo.dataset.nombre = data.nombre;
+                btnNuevo.dataset.info = data.telefono || data.email;
+                btnNuevo.innerHTML = `<div class="fw-semibold text-dark">${data.nombre}</div><div class="small text-muted">${data.telefono || data.email || 'Sin contacto'}</div>`;
+                btnNuevo.onclick = () => seleccionarCliente(data.id, data.nombre);
+                lista.appendChild(btnNuevo);
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalNuevoCliente'));
+                modal.hide();
+                document.getElementById('formNuevoCliente').reset();
+                seleccionarCliente(data.id, data.nombre);
+            } else {
+                alert(data.message || 'Error al guardar cliente');
+            }
+        } catch (err) {
+            alert('Error de conexión al guardar cliente');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    // 2. GESTIÓN DEL CATÁLOGO DE PRODUCTOS
+    function filtrarProductos() {
+        const busqueda = document.getElementById('busquedaProducto').value.toLowerCase().trim();
+        const categoriaId = document.getElementById('filtroCategoria').value;
+        const cards = document.querySelectorAll('.item-producto');
+
+        cards.forEach(card => {
+            const nombre = card.dataset.nombre;
+            const cat = card.dataset.categoria;
+
+            const coincideNombre = nombre.includes(busqueda);
+            const coincideCat = !categoriaId || cat === categoriaId;
+
+            if (coincideNombre && coincideCat) {
+                card.classList.remove('d-none');
+            } else {
+                card.classList.add('d-none');
+            }
+        });
+    }
+
+    function agregarDesdeCard(cardElement) {
+        if (!cardElement) return;
+        const id = parseInt(cardElement.dataset.id);
+        const nombre = cardElement.dataset.nombreDisplay || cardElement.dataset.nombre;
+        const precio = parseFloat(cardElement.dataset.precio);
+        const stock = parseInt(cardElement.dataset.stock);
+
+        agregarAlCarrito(id, nombre, precio, stock);
+    }
+
+    // 3. GESTIÓN DEL CARRITO DE COMPRA
+    function agregarAlCarrito(id, nombre, precio, stockMaximo) {
+        id = parseInt(id);
+        precio = parseFloat(precio) || 0;
+        stockMaximo = parseInt(stockMaximo);
+        if (isNaN(stockMaximo) || stockMaximo < 0) {
+            stockMaximo = 999999;
+        }
+
+        const itemExistente = carrito.find(item => item.id === id);
+
+        if (itemExistente) {
+            if (itemExistente.stockMaximo > 0 && itemExistente.cantidad >= itemExistente.stockMaximo) {
+                alert(`No puedes agregar más unidades. El stock máximo disponible es de ${itemExistente.stockMaximo}.`);
+                return;
+            }
+            itemExistente.cantidad++;
+        } else {
+            carrito.push({
+                id: id,
+                nombre: nombre,
+                precio: precio,
+                cantidad: 1,
+                stockMaximo: stockMaximo
+            });
+        }
+
+        renderCarrito();
+    }
+
+    function cambiarCantidad(id, cambio) {
+        const item = carrito.find(i => i.id === id);
+        if (!item) return;
+
+        const nuevaCantidad = item.cantidad + cambio;
+
+        if (item.stockMaximo > 0 && nuevaCantidad > item.stockMaximo) {
+            alert(`No puedes agregar más unidades. El stock máximo disponible es de ${item.stockMaximo}.`);
+            return;
+        }
+
+        if (nuevaCantidad <= 0) {
+            eliminarDelCarrito(id);
+            return;
+        }
+
+        item.cantidad = nuevaCantidad;
+        renderCarrito();
+    }
+
+    function asignarCantidad(id, valor) {
+        const item = carrito.find(i => i.id === id);
+        if (!item) return;
+
+        let cant = parseInt(valor) || 1;
+        if (cant <= 0) cant = 1;
+
+        if (item.stockMaximo > 0 && cant > item.stockMaximo) {
+            alert(`El stock disponible es de ${item.stockMaximo}. Se ajustó al máximo posible.`);
+            cant = item.stockMaximo;
+        }
+
+        item.cantidad = cant;
+        renderCarrito();
+    }
+
+    function eliminarDelCarrito(id) {
+        carrito = carrito.filter(i => i.id !== id);
+        renderCarrito();
+    }
+
+    function limpiarCarrito() {
+        if (carrito.length === 0 && !clienteSeleccionado) return;
+        if (confirm('¿Deseas reiniciar la venta actual?')) {
+            carrito = [];
+            deseleccionarCliente();
+            document.getElementById('montoRecibido').value = '';
+            renderCarrito();
+        }
+    }
+
+    function renderCarrito() {
+        const container = document.getElementById('listaItems');
+        const vacio = document.getElementById('carritoVacio');
+        const contador = document.getElementById('contadorItems');
+
+        container.innerHTML = '';
+
+        if (carrito.length === 0) {
+            vacio.classList.remove('d-none');
+            contador.textContent = '0 ítems';
+        } else {
+            vacio.classList.add('d-none');
+            const totalUnidades = carrito.reduce((sum, i) => sum + i.cantidad, 0);
+            contador.textContent = `${totalUnidades} ítem(s)`;
+
+            carrito.forEach(item => {
+                const subtotal = item.precio * item.cantidad;
+                const div = document.createElement('div');
+                div.className = 'p-2 rounded border bg-white d-flex justify-content-between align-items-center';
+                div.innerHTML = `
+                    <div style="flex: 1; min-width: 0;" class="pe-2">
+                        <div class="fw-semibold text-dark text-truncate" style="font-size: 0.85rem;" title="${item.nombre}">${item.nombre}</div>
+                        <div class="small text-muted">$${item.precio.toFixed(2)} c/u</div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="btn-group btn-group-sm border rounded" role="group">
+                            <button type="button" class="btn btn-light px-2 py-0" onclick="cambiarCantidad(${item.id}, -1)">-</button>
+                            <input type="number" min="1" max="${item.stockMaximo}" value="${item.cantidad}" 
+                                   class="form-control form-control-sm px-1 py-0 text-center fw-bold border-0" 
+                                   style="width: 42px; font-size: 0.82rem;" onchange="asignarCantidad(${item.id}, this.value)">
+                            <button type="button" class="btn btn-light px-2 py-0" onclick="cambiarCantidad(${item.id}, 1)">+</button>
+                        </div>
+                        <div class="fw-bold text-dark text-end" style="width: 65px; font-size: 0.9rem;">
+                            $${subtotal.toFixed(2)}
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link text-muted p-0" onclick="eliminarDelCarrito(${item.id})" title="Quitar">
+                            <i class="bi bi-x fs-5"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        calcularTotales();
+    }
+
+    // 4. CÁLCULO DE TOTALES Y CAMBIO
+    function calcularTotales() {
+        const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+        document.getElementById('subtotalDisplay').textContent = `$${total.toFixed(2)}`;
+        document.getElementById('totalDisplay').textContent = `$${total.toFixed(2)}`;
+
+        calcularCambio();
+    }
+
+    function pagarExacto() {
+        const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+        document.getElementById('montoRecibido').value = total.toFixed(2);
+        calcularCambio();
+    }
+
+    function sumarRecibido(monto) {
+        const actual = Number(document.getElementById('montoRecibido').value) || 0;
+        document.getElementById('montoRecibido').value = (actual + monto).toFixed(2);
+        calcularCambio();
+    }
+
+    function calcularCambio() {
+        const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+        const recibido = Number(document.getElementById('montoRecibido').value) || 0;
+        const cambio = recibido - total;
+
+        const cambioDisplay = document.getElementById('cambioDisplay');
+        const cambioLabel = document.getElementById('cambioLabel');
+        const cambioBox = document.getElementById('cambioBox');
+
+        if (total === 0) {
+            cambioDisplay.textContent = '$0.00';
+            cambioDisplay.className = 'fw-bold fs-5 text-dark';
+            cambioLabel.textContent = 'Cambio a entregar:';
+            cambioBox.style.backgroundColor = '#f4f4f5';
+        } else if (recibido >= total) {
+            cambioDisplay.textContent = `$${cambio.toFixed(2)}`;
+            cambioDisplay.className = 'fw-bold fs-5 text-success';
+            cambioLabel.textContent = 'Cambio a entregar:';
+            cambioBox.style.backgroundColor = '#ecfdf5';
+        } else {
+            const falta = total - recibido;
+            cambioDisplay.textContent = `-$${falta.toFixed(2)}`;
+            cambioDisplay.className = 'fw-bold fs-5 text-danger';
+            cambioLabel.textContent = 'Monto faltante:';
+            cambioBox.style.backgroundColor = '#fef2f2';
+        }
+
+        validarFormularioVenta();
+    }
+
+    function validarFormularioVenta() {
+        const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+        const recibido = Number(document.getElementById('montoRecibido').value) || 0;
+        const btn = document.getElementById('btnFinalizarVenta');
+
+        const esValido = carrito.length > 0 && recibido >= total && total > 0;
+        if (esValido) {
+            btn.classList.remove('opacity-75');
+            btn.style.cursor = 'pointer';
+        } else {
+            btn.classList.add('opacity-75');
+        }
+    }
+
+    // 5. PROCESAMIENTO DE LA VENTA
+    async function procesarVenta() {
+        const total = carrito.reduce((sum, item) => sum + (item.precio * item.cantidad), 0);
+        const recibido = Number(document.getElementById('montoRecibido').value) || 0;
+
+        if (carrito.length === 0) {
+            alert('El carrito está vacío. Agrega al menos un producto haciendo clic en el catálogo.');
+            return;
+        }
+
+        if (!clienteSeleccionado) {
+            @if (ViewBag.ClienteGeneral != null)
+            {
+                <text>
+                seleccionarCliente(@ViewBag.ClienteGeneral.Id, '@ViewBag.ClienteGeneral.Nombre');
+                </text>
+            }
+            else
+            {
+                <text>
+                const primerCliente = document.querySelector('.option-cliente');
+                if (primerCliente) {
+                    seleccionarCliente(parseInt(primerCliente.dataset.id), primerCliente.dataset.nombre);
+                } else {
+                    alert('Por favor selecciona o crea un cliente para la venta.');
+                    return;
+                }
+                </text>
+            }
+        }
+
+        if (recibido <= 0) {
+            alert('Por favor ingresa el monto recibido en efectivo.');
+            document.getElementById('montoRecibido').focus();
+            return;
+        }
+
+        if (recibido < total) {
+            alert(`El monto recibido ($${recibido.toFixed(2)}) no cubre el total de la compra ($${total.toFixed(2)}). Por favor ingresa el monto completo.`);
+            document.getElementById('montoRecibido').focus();
+            return;
+        }
+
+        const btn = document.getElementById('btnFinalizarVenta');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Procesando...';
+
+        const payload = {
+            clienteId: clienteSeleccionado.id,
+            recibido: recibido,
+            items: carrito.map(i => ({
+                productoId: i.id,
+                cantidad: i.cantidad,
+                precio: i.precio
+            }))
+        };
+
+        try {
+            const res = await fetch('/Ventas/ProcesarVenta', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+                document.getElementById('modalTicketTotal').textContent = `$${data.total.toFixed(2)}`;
+                document.getElementById('modalTicketRecibido').textContent = `$${data.recibido.toFixed(2)}`;
+                document.getElementById('modalTicketCambio').textContent = `$${data.cambio.toFixed(2)}`;
+                document.getElementById('btnVerTicket').href = `/Ventas/Detalle/${data.ventaId}`;
+
+                const modal = new bootstrap.Modal(document.getElementById('modalVentaExitosa'));
+                modal.show();
+            } else {
+                alert(data.message || 'Error al procesar la venta.');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-check2-circle"></i> Completar Venta';
+            }
+        } catch (err) {
+            alert('Error de comunicación con el servidor.');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check2-circle"></i> Completar Venta';
+        }
+    }
+
+    function iniciarNuevaVenta() {
+        const modalEl = document.getElementById('modalVentaExitosa');
+        const modal = bootstrap.Modal.getInstance(modalEl);
+        if (modal) modal.hide();
+
+        carrito = [];
+        document.getElementById('montoRecibido').value = '';
+        renderCarrito();
+
+        @if (ViewBag.ClienteGeneral != null)
+        {
+            <text>
+            seleccionarCliente(@ViewBag.ClienteGeneral.Id, '@ViewBag.ClienteGeneral.Nombre');
+            </text>
+        }
+
+        const btn = document.getElementById('btnFinalizarVenta');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check2-circle"></i> Completar Venta';
+    }
+
+    // Auto-seleccionar Cliente General al cargar la página
+    document.addEventListener('DOMContentLoaded', function () {
+        @if (ViewBag.ClienteGeneral != null)
+        {
+            <text>
+            seleccionarCliente(@ViewBag.ClienteGeneral.Id, '@ViewBag.ClienteGeneral.Nombre');
+            </text>
+        }
+    });
+</script>
+}

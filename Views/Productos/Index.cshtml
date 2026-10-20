@@ -1,0 +1,100 @@
+@model List<Producto>
+@{
+    ViewData["Title"] = "Productos";
+}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-3">
+    <div>
+        <h1 class="h4 fw-bold text-dark mb-1">Productos</h1>
+        <p class="text-muted small mb-0">Catálogo general, control de existencias y precios de venta.</p>
+    </div>
+    <a asp-action="Create" class="btn-minimal-dark text-decoration-none">
+        <i class="bi bi-plus-lg"></i> Nuevo Producto
+    </a>
+</div>
+
+<div class="card-minimal">
+    <div class="card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-box text-muted fs-1 opacity-50 d-block mb-2"></i>
+                <p class="fw-semibold text-dark mb-1">No hay productos en el inventario</p>
+                <p class="text-muted small mb-3">Registra tu primer producto para comenzar a vender.</p>
+                <a asp-action="Create" class="btn-minimal-dark text-decoration-none">
+                    <i class="bi bi-plus-lg"></i> Registrar Producto
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-minimal align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>Descripción</th>
+                            <th>Categoría</th>
+                            <th class="text-end">Precio</th>
+                            <th class="text-center">Stock</th>
+                            <th class="text-center">Mínimo</th>
+                            <th class="text-center">Estado</th>
+                            <th class="text-end pe-3" style="width: 170px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model)
+                        {
+                            var esBajoStock = p.Stock <= p.Stock_minimo;
+                            var esAgotado = p.Stock <= 0;
+                            <tr>
+                                <td class="text-muted fw-semibold">#@p.Id.ToString("D3")</td>
+                                <td>
+                                    <div class="fw-medium text-dark">@p.Nombre</div>
+                                </td>
+                                <td>
+                                    <span class="badge-minimal badge-minimal-neutral">
+                                        @(p.Categoria?.Nombre ?? "Sin categoría")
+                                    </span>
+                                </td>
+                                <td class="text-end fw-semibold text-dark">
+                                    @p.Precio.ToString("C")
+                                </td>
+                                <td class="text-center">
+                                    <span class="fw-bold @(esAgotado ? "text-danger" : esBajoStock ? "text-warning" : "text-dark")">
+                                        @p.Stock
+                                    </span>
+                                </td>
+                                <td class="text-center text-muted small">
+                                    @p.Stock_minimo
+                                </td>
+                                <td class="text-center">
+                                    @if (esAgotado)
+                                    {
+                                        <span class="badge-minimal badge-minimal-danger">Agotado</span>
+                                    }
+                                    else if (esBajoStock)
+                                    {
+                                        <span class="badge-minimal badge-minimal-warning">Stock Bajo</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge-minimal badge-minimal-success">Disponible</span>
+                                    }
+                                </td>
+                                <td class="text-end pe-3">
+                                    <a asp-action="Edit" asp-route-id="@p.Id" class="btn-minimal-outline text-decoration-none btn-sm py-1 px-2 me-1" title="Editar">
+                                        Editar
+                                    </a>
+                                    <a asp-action="Delete" asp-route-id="@p.Id" class="btn-minimal-danger text-decoration-none btn-sm py-1 px-2" title="Eliminar">
+                                        Eliminar
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

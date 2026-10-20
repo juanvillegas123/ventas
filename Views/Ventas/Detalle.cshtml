@@ -1,0 +1,134 @@
+@model Venta
+@{
+    ViewData["Title"] = $"Ticket de Venta #{Model.Id:D4}";
+}
+
+<div class="d-print-none mb-4 d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-2">
+        <a asp-action="Index" class="btn-minimal-outline text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Volver a Ventas
+        </a>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn-minimal-outline" onclick="window.print()">
+            <i class="bi bi-printer"></i> Imprimir Recibo
+        </button>
+        <a asp-action="Create" class="btn-minimal-dark text-decoration-none">
+            <i class="bi bi-plus-lg"></i> Nueva Venta
+        </a>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="card-minimal p-4 p-md-5 bg-white shadow-sm" id="ticketImpresion">
+            <!-- Encabezado del ticket -->
+            <div class="text-center pb-4 mb-4 border-bottom">
+                <div class="fw-bold fs-5 text-dark mb-1">VentasCore POS</div>
+                <div class="text-muted small">Comprobante de Venta Electrónico</div>
+                <div class="badge-minimal badge-minimal-neutral mt-2">
+                    Folio: #@Model.Id.ToString("D4")
+                </div>
+            </div>
+
+            <!-- Información de la transacción -->
+            <div class="row g-2 mb-4 small">
+                <div class="col-6">
+                    <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase;">FECHA Y HORA</span>
+                    <span class="fw-semibold text-dark">@Model.Fecha.ToString("dd/MM/yyyy HH:mm") hrs</span>
+                </div>
+                <div class="col-6 text-end">
+                    <span class="text-muted d-block" style="font-size: 0.72rem; text-transform: uppercase;">CLIENTE</span>
+                    <span class="fw-semibold text-dark">@(Model.Cliente?.Nombre ?? "Cliente General")</span>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Cliente?.Telefono))
+                {
+                    <div class="col-12 text-end text-muted" style="font-size: 0.75rem;">
+                        Tel: @Model.Cliente.Telefono
+                    </div>
+                }
+            </div>
+
+            <!-- Desglose de artículos -->
+            <div class="border-top border-bottom py-3 mb-4">
+                <table class="table table-borderless table-sm mb-0">
+                    <thead>
+                        <tr class="text-muted" style="font-size: 0.72rem; text-transform: uppercase;">
+                            <th>Cant.</th>
+                            <th>Descripción</th>
+                            <th class="text-end">P.Unit</th>
+                            <th class="text-end">Subtotal</th>
+                        </tr>
+                    </thead>
+                    <tbody class="small">
+                        @foreach (var d in Model.DetalleVentas)
+                        {
+                            <tr>
+                                <td class="fw-bold text-dark" style="width: 40px;">@d.Cantidad</td>
+                                <td class="text-dark">
+                                    <div class="fw-medium">@(d.Producto?.Nombre ?? "Producto")</div>
+                                    @if (d.Producto?.Categoria != null)
+                                    {
+                                        <span class="text-muted" style="font-size: 0.72rem;">@d.Producto.Categoria.Nombre</span>
+                                    }
+                                </td>
+                                <td class="text-end text-muted">@d.Precio.ToString("C")</td>
+                                <td class="text-end fw-semibold text-dark">@d.Subtotal.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Totales y Pago -->
+            <div class="mb-4">
+                <div class="d-flex justify-content-between text-muted small mb-1">
+                    <span>Subtotal</span>
+                    <span>@Model.Total.ToString("C")</span>
+                </div>
+                <div class="d-flex justify-content-between text-dark fw-bold fs-5 mb-3 border-top pt-2">
+                    <span>TOTAL</span>
+                    <span>@Model.Total.ToString("C")</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted small mb-1">
+                    <span>Monto Recibido</span>
+                    <span>@Model.Recibido.ToString("C")</span>
+                </div>
+                <div class="d-flex justify-content-between text-success fw-bold fs-6">
+                    <span>Cambio Devuelto</span>
+                    <span>@Model.Cambio.ToString("C")</span>
+                </div>
+            </div>
+
+            <!-- Pie del ticket -->
+            <div class="text-center pt-3 border-top text-muted" style="font-size: 0.75rem;">
+                <p class="mb-1">¡Gracias por su compra!</p>
+                <p class="mb-0 text-muted" style="font-size: 0.7rem;">Conserve este comprobante para cualquier aclaración.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    @@media print {
+        header, footer, .d-print-none {
+            display: none !important;
+        }
+        body {
+            background-color: #ffffff !important;
+            padding: 0 !important;
+        }
+        main {
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        #ticketImpresion {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            width: 100% !important;
+            max-width: 400px !important;
+            margin: 0 auto !important;
+        }
+    }
+</style>

@@ -1,0 +1,73 @@
+### =====================================
+### CATEGORIAS
+### =====================================
+
+### 1. Listar todas las categorías
+GET http://localhost:5000/api/categorias
+Accept: application/json
+
+### 2. Obtener categoría por ID
+GET http://localhost:5000/api/categorias/1
+Accept: application/json
+
+### 3. Crear una categoría
+POST http://localhost:5000/api/categorias
+Content-Type: application/json
+
+{
+  "nombre": "Limpieza del Hogar"
+}
+
+### 4. Actualizar categoría
+PUT http://localhost:5000/api/categorias/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "nombre": "Limpieza y Desinfección"
+}
+
+### 5. Eliminar categoría
+DELETE http://localhost:5000/api/categorias/4
+
+### =====================================
+### PRODUCTOS
+### =====================================
+
+### 6. Listar todos los productos
+GET http://localhost:5000/api/productos
+Accept: application/json
+
+### 7. Obtener producto por ID
+GET http://localhost:5000/api/productos/1
+Accept: application/json
+
+### 8. Crear un producto
+POST http://localhost:5000/api/productos
+Content-Type: application/json
+
+{
+  "nombre": "Detergente Multiuso",
+  "precio": 12.5,
+  "stock": 20,
+  "stock_minimo": 5,
+  "categoriaId": 1
+}
+
+### =====================================
+### CLIENTES
+### =====================================
+
+### 9. Listar clientes
+GET http://localhost:5000/api/clientes
+Accept: application/json
+
+### 10. Crear cliente
+POST http://localhost:5000/api/clientes
+Content-Type: application/json
+
+{
+  "nombre": "Juan Pérez",
+  "email": "juan@correo.com",
+  "telefono": "12345678"
+}

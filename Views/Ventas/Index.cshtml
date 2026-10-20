@@ -1,0 +1,90 @@
+@model List<Venta>
+@{
+    ViewData["Title"] = "Historial de Ventas";
+}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-3">
+    <div>
+        <h1 class="h4 fw-bold text-dark mb-1">Historial de Ventas</h1>
+        <p class="text-muted small mb-0">Registro y trazabilidad de todas las transacciones realizadas.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <a asp-action="Create" class="btn-minimal-dark text-decoration-none">
+            <i class="bi bi-plus-lg"></i> Nueva Venta (POS)
+        </a>
+    </div>
+</div>
+
+<div class="card-minimal">
+    <div class="card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-receipt text-muted fs-1 opacity-50 d-block mb-2"></i>
+                <p class="fw-semibold text-dark mb-1">Aún no hay ventas registradas</p>
+                <p class="text-muted small mb-3">Comienza cobrando tu primera venta desde la terminal de punto de venta.</p>
+                <a asp-action="Create" class="btn-minimal-dark text-decoration-none">
+                    <i class="bi bi-plus-lg"></i> Ir al Punto de Venta
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-minimal align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">Folio</th>
+                            <th>Fecha y Hora</th>
+                            <th>Cliente</th>
+                            <th class="text-center">Artículos</th>
+                            <th class="text-end">Total</th>
+                            <th class="text-end">Recibido</th>
+                            <th class="text-end">Cambio</th>
+                            <th class="text-end pe-3" style="width: 130px;">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var v in Model)
+                        {
+                            var totalItems = v.DetalleVentas?.Sum(d => d.Cantidad) ?? 0;
+                            <tr>
+                                <td class="fw-bold text-dark">
+                                    #@v.Id.ToString("D4")
+                                </td>
+                                <td class="text-muted small">
+                                    <div class="text-dark fw-medium">@v.Fecha.ToString("dd MMM yyyy")</div>
+                                    <span style="font-size: 0.75rem;">@v.Fecha.ToString("HH:mm") hrs</span>
+                                </td>
+                                <td>
+                                    <span class="fw-medium text-dark">
+                                        @(v.Cliente?.Nombre ?? "Cliente General")
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge-minimal badge-minimal-neutral">
+                                        @totalItems unid.
+                                    </span>
+                                </td>
+                                <td class="text-end fw-bold text-dark fs-6">
+                                    @v.Total.ToString("C")
+                                </td>
+                                <td class="text-end text-muted small">
+                                    @v.Recibido.ToString("C")
+                                </td>
+                                <td class="text-end text-muted small">
+                                    @v.Cambio.ToString("C")
+                                </td>
+                                <td class="text-end pe-3">
+                                    <a asp-action="Detalle" asp-route-id="@v.Id" class="btn-minimal-outline text-decoration-none btn-sm py-1 px-2" title="Ver Detalle / Ticket">
+                                        <i class="bi bi-receipt"></i> Ticket
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

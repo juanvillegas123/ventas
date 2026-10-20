@@ -1,0 +1,62 @@
+@model Producto
+@{
+    ViewData["Title"] = "Nuevo Producto";
+    var categorias = (List<Categoria>)ViewBag.Categorias;
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="mb-4">
+            <a asp-action="Index" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+                <i class="bi bi-arrow-left"></i> Volver a Productos
+            </a>
+            <h1 class="h4 fw-bold text-dark mb-1">Nuevo Producto</h1>
+            <p class="text-muted small mb-0">Ingresa la información del nuevo artículo en el catálogo.</p>
+        </div>
+
+        <div class="card-minimal p-4">
+            <form asp-action="Create" method="post">
+                <div class="mb-3">
+                    <label asp-for="Nombre" class="form-label small fw-semibold text-dark">Nombre del Producto *</label>
+                    <input asp-for="Nombre" class="form-control form-control-minimal" placeholder="Ej. Arroz 1kg, Detergente..." required autofocus>
+                    <span asp-validation-for="Nombre" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoriaId" class="form-label small fw-semibold text-dark">Categoría *</label>
+                    <select asp-for="CategoriaId" class="form-select form-select-minimal" required>
+                        <option value="">Selecciona una categoría</option>
+                        @foreach (var c in categorias)
+                        {
+                            <option value="@c.Id">@c.Nombre</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CategoriaId" class="text-danger small"></span>
+                </div>
+
+                <div class="row g-3 mb-3">
+                    <div class="col-12 col-sm-4">
+                        <label asp-for="Precio" class="form-label small fw-semibold text-dark">Precio ($) *</label>
+                        <input asp-for="Precio" type="number" step="0.5" min="0" class="form-control form-control-minimal" placeholder="0.00" required>
+                        <span asp-validation-for="Precio" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label asp-for="Stock" class="form-label small fw-semibold text-dark">Stock Inicial *</label>
+                        <input asp-for="Stock" type="number" min="0" class="form-control form-control-minimal" placeholder="0" required>
+                        <span asp-validation-for="Stock" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 col-sm-4">
+                        <label asp-for="Stock_minimo" class="form-label small fw-semibold text-dark">Stock Mínimo *</label>
+                        <input asp-for="Stock_minimo" type="number" min="0" class="form-control form-control-minimal" placeholder="5" required>
+                        <span asp-validation-for="Stock_minimo" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-2">
+                    <a asp-action="Index" class="btn-minimal-outline text-decoration-none">Cancelar</a>
+                    <button type="submit" class="btn-minimal-dark">Guardar Producto</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

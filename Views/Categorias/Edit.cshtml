@@ -1,0 +1,33 @@
+@model Categoria
+@{
+    ViewData["Title"] = "Editar Categoría";
+}
+
+<div class="row justify-content-center">
+    <div class="col-12 col-md-8 col-lg-6">
+        <div class="mb-4">
+            <a asp-action="Index" class="text-decoration-none text-muted small d-inline-flex align-items-center gap-1 mb-2">
+                <i class="bi bi-arrow-left"></i> Volver a Categorías
+            </a>
+            <h1 class="h4 fw-bold text-dark mb-1">Editar Categoría</h1>
+            <p class="text-muted small mb-0">Modifica los datos de la categoría seleccionada.</p>
+        </div>
+
+        <div class="card-minimal p-4">
+            <form asp-action="Edit" method="post">
+                <input type="hidden" asp-for="Id" />
+                
+                <div class="mb-3">
+                    <label asp-for="Nombre" class="form-label small fw-semibold text-dark">Nombre de la Categoría</label>
+                    <input asp-for="Nombre" class="form-control form-control-minimal" required autofocus>
+                    <span asp-validation-for="Nombre" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-2">
+                    <a asp-action="Index" class="btn-minimal-outline text-decoration-none">Cancelar</a>
+                    <button type="submit" class="btn-minimal-dark">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

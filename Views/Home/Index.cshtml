@@ -1,0 +1,576 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Panel de Control";
+}
+
+<div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-4 gap-3">
+    <div>
+        <h1 class="h4 fw-bold text-dark mb-1">Panel de Control</h1>
+        <p class="text-muted small mb-0">Métricas clave, comportamiento de ventas e inventario en tiempo real.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span class="badge-minimal badge-minimal-neutral px-3 py-2 text-dark" style="font-size: 0.8rem;">
+            <i class="bi bi-calendar3 me-1"></i> @DateTime.Now.ToString("dddd, dd 'de' MMMM 'de' yyyy")
+        </span>
+        <a asp-controller="Ventas" asp-action="Create" class="btn-minimal-dark text-decoration-none">
+            <i class="bi bi-plus-lg"></i> Punto de Venta (POS)
+        </a>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 1. KPI CARDS (8 MÉTRICAS PRINCIPALES)          -->
+<!-- ============================================== -->
+<div class="row g-3 mb-4">
+    <!-- Ventas de Hoy -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-minimal h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.04em;">Ventas de Hoy</span>
+                <span class="badge-minimal badge-minimal-neutral">Hoy</span>
+            </div>
+            <div class="fs-4 fw-bold text-dark mb-1">
+                @Model.VentasHoy.ToString("C")
+            </div>
+            <div class="small text-muted">
+                @Model.CantidadVentasHoy transacción(es) hoy
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventas del Mes -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-minimal h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.04em;">Mes en Curso</span>
+                <span class="badge-minimal badge-minimal-neutral">@DateTime.Now.ToString("MMMM")</span>
+            </div>
+            <div class="fs-4 fw-bold text-dark mb-1">
+                @Model.VentasMes.ToString("C")
+            </div>
+            <div class="small text-muted">
+                @Model.CantidadVentasMes venta(s) este mes
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventas del Año -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-minimal h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.04em;">Acumulado Anual</span>
+                <span class="badge-minimal badge-minimal-neutral">@DateTime.Now.Year</span>
+            </div>
+            <div class="fs-4 fw-bold text-dark mb-1">
+                @Model.VentasAnio.ToString("C")
+            </div>
+            <div class="small text-muted">
+                @Model.CantidadVentasAnio transacción(es) en @DateTime.Now.Year
+            </div>
+        </div>
+    </div>
+
+    <!-- Total Histórico -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-minimal h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.04em;">Total Histórico</span>
+                <span class="badge-minimal badge-minimal-neutral">Global</span>
+            </div>
+            <div class="fs-4 fw-bold text-dark mb-1">
+                @Model.TotalHistorico.ToString("C")
+            </div>
+            <div class="small text-muted">
+                @Model.TotalVentasHistorico venta(s) totales
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket Promedio -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-minimal h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.04em;">Ticket Promedio</span>
+                <span class="badge-minimal badge-minimal-neutral">Promedio</span>
+            </div>
+            <div class="fs-4 fw-bold text-dark mb-1">
+                @Model.TicketPromedio.ToString("C")
+            </div>
+            <div class="small text-muted">
+                Gasto promedio por transacción
+            </div>
+        </div>
+    </div>
+
+    <!-- Clientes -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-minimal h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.04em;">Clientes</span>
+                <span class="badge-minimal badge-minimal-neutral">Directorio</span>
+            </div>
+            <div class="fs-4 fw-bold text-dark mb-1">
+                @Model.TotalClientes
+            </div>
+            <div class="small text-muted">
+                Clientes registrados
+            </div>
+        </div>
+    </div>
+
+    <!-- Catálogo de Productos -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-minimal h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.04em;">Catálogo</span>
+                <span class="badge-minimal badge-minimal-neutral">@Model.TotalCategorias categorías</span>
+            </div>
+            <div class="fs-4 fw-bold text-dark mb-1">
+                @Model.TotalProductos
+            </div>
+            <div class="small text-muted">
+                Productos activos en inventario
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas de Stock Bajo -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card-minimal h-100 p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="text-muted small text-uppercase fw-semibold" style="letter-spacing: 0.04em;">Alertas de Stock</span>
+                @if (Model.ProductosStockBajo.Count > 0)
+                {
+                    <span class="badge-minimal badge-minimal-danger">Atención</span>
+                }
+                else
+                {
+                    <span class="badge-minimal badge-minimal-success">Óptimo</span>
+                }
+            </div>
+            <div class="fs-4 fw-bold @(Model.ProductosStockBajo.Count > 0 ? "text-danger" : "text-dark") mb-1">
+                @Model.ProductosStockBajo.Count
+            </div>
+            <div class="small @(Model.ProductosStockBajo.Count > 0 ? "text-danger" : "text-muted")">
+                @(Model.ProductosStockBajo.Count > 0 ? "Productos requieren reposición" : "Inventario sin alertas")
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 2. GRÁFICOS: TENDENCIA 7 DÍAS Y CATEGORÍAS     -->
+<!-- ============================================== -->
+<div class="row g-4 mb-4">
+    <!-- Tendencia de Ventas (Últimos 7 días) -->
+    <div class="col-12 col-lg-8">
+        <div class="card-minimal p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div>
+                    <h6 class="fw-bold text-dark mb-0">Evolución de Ventas (Últimos 7 Días)</h6>
+                    <small class="text-muted">Ingresos generados por fecha.</small>
+                </div>
+            </div>
+            <div style="height: 240px; position: relative;">
+                <canvas id="chartTendenciaVentas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventas por Categoría (Dona) -->
+    <div class="col-12 col-lg-4">
+        <div class="card-minimal p-4 h-100">
+            <div class="mb-3">
+                <h6 class="fw-bold text-dark mb-0">Participación por Categoría</h6>
+                <small class="text-muted">Distribución de ingresos por familia.</small>
+            </div>
+            @if (Model.VentasPorCategorias.Count == 0)
+            {
+                <div class="text-center py-5 text-muted small">
+                    Sin ventas suficientes para graficar
+                </div>
+            }
+            else
+            {
+                <div style="height: 190px; position: relative;">
+                    <canvas id="chartCategorias"></canvas>
+                </div>
+                <div class="mt-3 pt-2 border-top small d-flex flex-wrap gap-2 justify-content-center">
+                    @foreach (var cat in Model.VentasPorCategorias)
+                    {
+                        <span class="badge-minimal badge-minimal-neutral">
+                            @cat.CategoriaNombre (@cat.Porcentaje%)
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 3. TOP PRODUCTOS MÁS VENDIDOS Y POR CATEGORÍAS -->
+<!-- ============================================== -->
+<div class="row g-4 mb-4">
+    <!-- Top 5 Productos Más Vendidos -->
+    <div class="col-12 col-lg-6">
+        <div class="card-minimal h-100">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="fw-bold text-dark mb-0">Productos Más Vendidos</h6>
+                    <small class="text-muted">Artículos con mayor demanda en el negocio.</small>
+                </div>
+                <span class="badge-minimal badge-minimal-neutral">Top 5</span>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.ProductosMasVendidos.Count == 0)
+                {
+                    <div class="text-center py-5 text-muted small">
+                        <i class="bi bi-trophy fs-3 d-block mb-1 opacity-50"></i>
+                        Aún no se han registrado ventas de productos
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-minimal align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 45px;">#</th>
+                                    <th>Producto</th>
+                                    <th class="text-center">Unidades</th>
+                                    <th class="text-end">Recaudado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{ var posicion = 1; }
+                                @foreach (var p in Model.ProductosMasVendidos)
+                                {
+                                    <tr>
+                                        <td class="fw-bold text-muted">@posicion</td>
+                                        <td>
+                                            <div class="fw-medium text-dark">@p.Nombre</div>
+                                            <small class="text-muted">@p.CategoriaNombre</small>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge-minimal badge-minimal-neutral fw-semibold">
+                                                @p.CantidadVendida unid.
+                                            </span>
+                                        </td>
+                                        <td class="text-end fw-bold text-dark">
+                                            @p.TotalRecaudado.ToString("C")
+                                        </td>
+                                    </tr>
+                                    posicion++;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Desglose de Ventas por Categoría -->
+    <div class="col-12 col-lg-6">
+        <div class="card-minimal h-100">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="fw-bold text-dark mb-0">Rendimiento por Categoría</h6>
+                    <small class="text-muted">Ingresos y volumen total por categoría.</small>
+                </div>
+                <a asp-controller="Categorias" asp-action="Index" class="btn-minimal-outline text-decoration-none btn-sm py-1 px-2">
+                    Categorías
+                </a>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.VentasPorCategorias.Count == 0)
+                {
+                    <div class="text-center py-5 text-muted small">
+                        <i class="bi bi-tag fs-3 d-block mb-1 opacity-50"></i>
+                        No hay registros de ventas por categorías
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-minimal align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Categoría</th>
+                                    <th class="text-center">Volumen</th>
+                                    <th class="text-end">Total Ventas</th>
+                                    <th style="width: 120px;">Participación</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var c in Model.VentasPorCategorias)
+                                {
+                                    <tr>
+                                        <td class="fw-medium text-dark">@c.CategoriaNombre</td>
+                                        <td class="text-center text-muted small">@c.CantidadProductosVendidos unid.</td>
+                                        <td class="text-end fw-semibold text-dark">@c.TotalRecaudado.ToString("C")</td>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="progress flex-grow-1" style="height: 6px; background-color: #f4f4f5;">
+                                                    <div class="progress-bar bg-dark" role="progressbar" style="width: @c.Porcentaje%;"></div>
+                                                </div>
+                                                <small class="text-muted" style="font-size: 0.72rem;">@c.Porcentaje%</small>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ============================================== -->
+<!-- 4. ACTIVIDAD RECIENTE Y ALERTAS DE INVENTARIO  -->
+<!-- ============================================== -->
+<div class="row g-4">
+    <!-- Últimas Ventas Realizadas -->
+    <div class="col-12 col-lg-7">
+        <div class="card-minimal h-100">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="fw-bold text-dark mb-0">Últimas Ventas Realizadas</h6>
+                    <small class="text-muted">Transacciones más recientes registradas en el POS.</small>
+                </div>
+                <a asp-controller="Ventas" asp-action="Index" class="btn-minimal-outline text-decoration-none btn-sm py-1 px-2">
+                    Historial Completo
+                </a>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.UltimasVentas.Count == 0)
+                {
+                    <div class="text-center py-5 text-muted small">
+                        <i class="bi bi-clock-history fs-3 d-block mb-1 opacity-50"></i>
+                        Aún no se han completado transacciones
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-minimal align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Folio</th>
+                                    <th>Cliente</th>
+                                    <th>Fecha</th>
+                                    <th class="text-end">Total</th>
+                                    <th class="text-end pe-3">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var v in Model.UltimasVentas)
+                                {
+                                    <tr>
+                                        <td class="fw-semibold text-dark">#@v.Id.ToString("D4")</td>
+                                        <td>
+                                            <div class="fw-medium text-dark">@(v.Cliente?.Nombre ?? "Cliente General")</div>
+                                            <small class="text-muted">@(v.DetalleVentas?.Count ?? 0) artículo(s)</small>
+                                        </td>
+                                        <td class="text-muted small">
+                                            @v.Fecha.ToString("dd MMM HH:mm")
+                                        </td>
+                                        <td class="text-end fw-bold text-dark">
+                                            @v.Total.ToString("C")
+                                        </td>
+                                        <td class="text-end pe-3">
+                                            <a asp-controller="Ventas" asp-action="Detalle" asp-route-id="@v.Id" 
+                                               class="btn-minimal-outline text-decoration-none btn-sm py-1 px-2">
+                                                Ticket
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Alertas de Stock Bajo -->
+    <div class="col-12 col-lg-5">
+        <div class="card-minimal h-100">
+            <div class="p-3 border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="fw-bold text-dark mb-0">Inventario Crítico</h6>
+                    <small class="text-muted">Productos por debajo del stock mínimo.</small>
+                </div>
+                <a asp-controller="Productos" asp-action="Index" class="btn-minimal-outline text-decoration-none btn-sm py-1 px-2">
+                    Inventario
+                </a>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.ProductosStockBajo.Count == 0)
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-check2 text-muted fs-2 d-block mb-1"></i>
+                        <p class="fw-medium text-dark mb-0 small">Inventario en orden</p>
+                        <p class="text-muted small mb-0">No hay productos en nivel crítico.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-minimal align-middle">
+                            <thead>
+                                <tr>
+                                    <th>Producto</th>
+                                    <th class="text-center">Stock</th>
+                                    <th class="text-center">Mínimo</th>
+                                    <th class="text-center">Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var prod in Model.ProductosStockBajo)
+                                {
+                                    var esAgotado = prod.Stock <= 0;
+                                    <tr>
+                                        <td>
+                                            <div class="fw-medium text-dark">@prod.Nombre</div>
+                                            <small class="text-muted">@(prod.Categoria?.Nombre ?? "General")</small>
+                                        </td>
+                                        <td class="text-center fw-bold @(esAgotado ? "text-danger" : "text-warning")">
+                                            @prod.Stock
+                                        </td>
+                                        <td class="text-center text-muted small">
+                                            @prod.Stock_minimo
+                                        </td>
+                                        <td class="text-center">
+                                            @if (esAgotado)
+                                            {
+                                                <span class="badge-minimal badge-minimal-danger">Agotado</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge-minimal badge-minimal-warning">Por agotar</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 1. Gráfico de Tendencia de Ventas (Últimos 7 días)
+        const ctxTendencia = document.getElementById('chartTendenciaVentas');
+        if (ctxTendencia) {
+            const labels7Dias = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VentasUltimos7Dias.Select(x => x.Dia)));
+            const data7Dias = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VentasUltimos7Dias.Select(x => x.Total)));
+
+            new Chart(ctxTendencia, {
+                type: 'line',
+                data: {
+                    labels: labels7Dias,
+                    datasets: [{
+                        label: 'Ventas ($)',
+                        data: data7Dias,
+                        borderColor: '#18181b',
+                        backgroundColor: 'rgba(24, 24, 27, 0.04)',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#18181b',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        tension: 0.35,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#18181b',
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    return ' Ventas: $' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter', size: 11 }, color: '#71717a' }
+                        },
+                        y: {
+                            grid: { color: '#f4f4f5' },
+                            ticks: {
+                                font: { family: 'Inter', size: 11 },
+                                color: '#71717a',
+                                callback: function(val) { return '$' + val; }
+                            },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // 2. Gráfico de Categorías (Dona)
+        const ctxCategorias = document.getElementById('chartCategorias');
+        if (ctxCategorias) {
+            const labelsCat = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VentasPorCategorias.Select(x => x.CategoriaNombre)));
+            const dataCat = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.VentasPorCategorias.Select(x => x.TotalRecaudado)));
+
+            new Chart(ctxCategorias, {
+                type: 'doughnut',
+                data: {
+                    labels: labelsCat,
+                    datasets: [{
+                        data: dataCat,
+                        backgroundColor: [
+                            '#18181b',
+                            '#52525b',
+                            '#a1a1aa',
+                            '#d4d4d8',
+                            '#e4e4e7'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: '#18181b',
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    return ' ' + context.label + ': $' + context.parsed.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    cutout: '72%'
+                }
+            });
+        }
+    });
+</script>
+}
