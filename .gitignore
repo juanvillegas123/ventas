@@ -1,0 +1,13 @@
+bin/
+obj/
+.vs/
+.vscode/
+publish/
+*.user
+
+# Secretos
+.env
+*.db
+*.db-shm
+*.db-wal
+migracion.sql
