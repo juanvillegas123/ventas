@@ -17,6 +17,117 @@ public class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // --- 1. CATEGORIA ---
+        modelBuilder.Entity<Categoria>(entity =>
+        {
+            entity.Property(c => c.Nombre)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            entity.HasIndex(c => c.Nombre)
+                .IsUnique()
+                .HasDatabaseName("IX_Categorias_Nombre_Unique");
+        });
+
+        // --- 2. PRODUCTO ---
+        modelBuilder.Entity<Producto>(entity =>
+        {
+            entity.Property(p => p.Nombre)
+                .IsRequired()
+                .HasMaxLength(100);
+
+            entity.Property(p => p.Precio)
+                .HasPrecision(18, 2);
+
+            entity.HasIndex(p => new { p.Nombre, p.CategoriaId })
+                .IsUnique()
+                .HasDatabaseName("IX_Productos_Nombre_CategoriaId_Unique");
+
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_Productos_Precio", "Precio > 0");
+                t.HasCheckConstraint("CK_Productos_Stock", "Stock >= 0");
+                t.HasCheckConstraint("CK_Productos_Stock_minimo", "Stock_minimo >= 0");
+            });
+
+            entity.HasOne(p => p.Categoria)
+                .WithMany(c => c.Productos)
+                .HasForeignKey(p => p.CategoriaId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // --- 3. CLIENTE ---
+        modelBuilder.Entity<Cliente>(entity =>
+        {
+            entity.Property(c => c.Nombre)
+                .IsRequired()
+                .HasMaxLength(120);
+
+            entity.Property(c => c.Email)
+                .HasMaxLength(150);
+
+            entity.Property(c => c.Telefono)
+                .HasMaxLength(20);
+
+            entity.HasIndex(c => c.Email)
+                .IsUnique()
+                .HasFilter("Email IS NOT NULL")
+                .HasDatabaseName("IX_Clientes_Email_Unique");
+        });
+
+        // --- 4. VENTA ---
+        modelBuilder.Entity<Venta>(entity =>
+        {
+            entity.Property(v => v.Total)
+                .HasPrecision(18, 2);
+
+            entity.Property(v => v.Recibido)
+                .HasPrecision(18, 2);
+
+            entity.Property(v => v.Cambio)
+                .HasPrecision(18, 2);
+
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_Ventas_Total", "Total >= 0");
+                t.HasCheckConstraint("CK_Ventas_Recibido", "Recibido >= Total");
+                t.HasCheckConstraint("CK_Ventas_Cambio", "Cambio >= 0");
+            });
+
+            entity.HasOne(v => v.Cliente)
+                .WithMany(c => c.Ventas)
+                .HasForeignKey(v => v.ClienteId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // --- 5. DETALLE VENTA ---
+        modelBuilder.Entity<DetalleVenta>(entity =>
+        {
+            entity.Property(d => d.Precio)
+                .HasPrecision(18, 2);
+
+            entity.Property(d => d.Subtotal)
+                .HasPrecision(18, 2);
+
+            entity.ToTable(t =>
+            {
+                t.HasCheckConstraint("CK_DetalleVentas_Cantidad", "Cantidad > 0");
+                t.HasCheckConstraint("CK_DetalleVentas_Precio", "Precio > 0");
+                t.HasCheckConstraint("CK_DetalleVentas_Subtotal", "Subtotal > 0");
+            });
+
+            entity.HasOne(d => d.Venta)
+                .WithMany(v => v.DetalleVentas)
+                .HasForeignKey(d => d.VentaId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Producto)
+                .WithMany()
+                .HasForeignKey(d => d.ProductoId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
         //Insercion de datos iniciales a la tabla categorias
         modelBuilder.Entity<Categoria>().HasData(
             new Categoria { Id = 1, Nombre = "Limpieza" },

@@ -25,9 +25,14 @@ namespace sistema_ventas.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
+                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Categorias_Nombre_Unique");
 
                     b.ToTable("Categorias");
 
@@ -56,16 +61,24 @@ namespace sistema_ventas.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Email")
+                        .HasMaxLength(150)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
+                        .HasMaxLength(120)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Telefono")
+                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Email")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Clientes_Email_Unique")
+                        .HasFilter("Email IS NOT NULL");
 
                     b.ToTable("Clientes");
                 });
@@ -80,12 +93,14 @@ namespace sistema_ventas.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal>("Precio")
+                        .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ProductoId")
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal>("Subtotal")
+                        .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("VentaId")
@@ -97,7 +112,14 @@ namespace sistema_ventas.Migrations
 
                     b.HasIndex("VentaId");
 
-                    b.ToTable("DetalleVentas");
+                    b.ToTable("DetalleVentas", t =>
+                        {
+                            t.HasCheckConstraint("CK_DetalleVentas_Cantidad", "Cantidad > 0");
+
+                            t.HasCheckConstraint("CK_DetalleVentas_Precio", "Precio > 0");
+
+                            t.HasCheckConstraint("CK_DetalleVentas_Subtotal", "Subtotal > 0");
+                        });
                 });
 
             modelBuilder.Entity("sistema_ventas.Models.Producto", b =>
@@ -111,9 +133,11 @@ namespace sistema_ventas.Migrations
 
                     b.Property<string>("Nombre")
                         .IsRequired()
+                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Precio")
+                        .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Stock")
@@ -126,7 +150,18 @@ namespace sistema_ventas.Migrations
 
                     b.HasIndex("CategoriaId");
 
-                    b.ToTable("Productos");
+                    b.HasIndex("Nombre", "CategoriaId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Productos_Nombre_CategoriaId_Unique");
+
+                    b.ToTable("Productos", t =>
+                        {
+                            t.HasCheckConstraint("CK_Productos_Precio", "Precio > 0");
+
+                            t.HasCheckConstraint("CK_Productos_Stock", "Stock >= 0");
+
+                            t.HasCheckConstraint("CK_Productos_Stock_minimo", "Stock_minimo >= 0");
+                        });
 
                     b.HasData(
                         new
@@ -165,6 +200,7 @@ namespace sistema_ventas.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<decimal>("Cambio")
+                        .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("ClienteId")
@@ -174,16 +210,25 @@ namespace sistema_ventas.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Recibido")
+                        .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
                     b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
                     b.HasIndex("ClienteId");
 
-                    b.ToTable("Ventas");
+                    b.ToTable("Ventas", t =>
+                        {
+                            t.HasCheckConstraint("CK_Ventas_Cambio", "Cambio >= 0");
+
+                            t.HasCheckConstraint("CK_Ventas_Recibido", "Recibido >= Total");
+
+                            t.HasCheckConstraint("CK_Ventas_Total", "Total >= 0");
+                        });
                 });
 
             modelBuilder.Entity("sistema_ventas.Models.DetalleVenta", b =>
@@ -191,7 +236,7 @@ namespace sistema_ventas.Migrations
                     b.HasOne("sistema_ventas.Models.Producto", "Producto")
                         .WithMany()
                         .HasForeignKey("ProductoId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("sistema_ventas.Models.Venta", "Venta")
@@ -210,7 +255,7 @@ namespace sistema_ventas.Migrations
                     b.HasOne("sistema_ventas.Models.Categoria", "Categoria")
                         .WithMany("Productos")
                         .HasForeignKey("CategoriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Categoria");
@@ -221,7 +266,7 @@ namespace sistema_ventas.Migrations
                     b.HasOne("sistema_ventas.Models.Cliente", "Cliente")
                         .WithMany("Ventas")
                         .HasForeignKey("ClienteId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Cliente");

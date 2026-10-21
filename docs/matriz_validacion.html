@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Matriz de Validación en Tres Capas - VentasCore</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 10mm 12mm;
+        }
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #18181b;
+            background: #ffffff;
+            margin: 0;
+            padding: 10px;
+            font-size: 8.5pt;
+            line-height: 1.35;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #18181b;
+            padding-bottom: 6px;
+            margin-bottom: 10px;
+        }
+        .header h1 {
+            font-size: 16pt;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin: 0 0 2px 0;
+            color: #18181b;
+            text-transform: uppercase;
+        }
+        .header .subtitle {
+            font-size: 10.5pt;
+            font-weight: 600;
+            color: #4f46e5;
+            margin: 0 0 4px 0;
+        }
+        .header .meta {
+            font-size: 7.5pt;
+            color: #52525b;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+        .header .meta strong {
+            color: #18181b;
+        }
+        .section-title {
+            font-size: 10pt;
+            font-weight: 700;
+            color: #18181b;
+            border-bottom: 1px solid #d4d4d8;
+            padding-bottom: 3px;
+            margin: 8px 0 6px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .tiers-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .tier-box {
+            background: #f4f4f5;
+            border-left: 3px solid #4f46e5;
+            padding: 6px 10px;
+            border-radius: 4px;
+        }
+        .tier-box h3 {
+            margin: 0 0 3px 0;
+            font-size: 8.5pt;
+            font-weight: 700;
+            color: #18181b;
+        }
+        .tier-box p {
+            margin: 0;
+            font-size: 7.5pt;
+            color: #3f3f46;
+            line-height: 1.3;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 7.5pt;
+            margin-top: 4px;
+        }
+        thead th {
+            background-color: #27272a !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            text-align: left;
+            padding: 5px 6px;
+            border-top: 2px solid #18181b;
+            border-bottom: 2px solid #18181b;
+            letter-spacing: 0.02em;
+        }
+        tbody td {
+            padding: 4px 6px;
+            border-bottom: 1px solid #e4e4e7;
+            vertical-align: middle;
+        }
+        tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+        .badge-id {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background: #e0e7ff;
+            color: #3730a3;
+            padding: 1px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+            font-size: 7pt;
+            white-space: nowrap;
+        }
+        .code-tag {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            background: #f1f5f9;
+            color: #0f172a;
+            padding: 1px 3px;
+            border-radius: 2px;
+            font-size: 7pt;
+        }
+        .module-cell {
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .footer-note {
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid #e4e4e7;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 7.5pt;
+            color: #71717a;
+        }
+        .test-pill {
+            background: #dcfce7;
+            color: #15803d;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 7pt;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>Matriz de Validación en Tres Capas</h1>
+        <div class="subtitle">Estrategia de Defensa en Profundidad y Entorno de Pruebas Automatizadas</div>
+        <div class="meta">
+            <span><strong>Proyecto:</strong> sistema_ventas (VentasCore)</span>
+            <span><strong>Framework:</strong> .NET 10.0 / C# 13</span>
+            <span><strong>Base de Datos:</strong> SQLite / EF Core 10</span>
+            <span><strong>Certificación:</strong> 20/20 Pruebas Superadas</span>
+        </div>
+    </div>
+
+    <div class="tiers-summary">
+        <div class="tier-box" style="border-left-color: #3b82f6;">
+            <h3>Capa 1: Frontend (UX &amp; Ergonomía)</h3>
+            <p>Feedback visual reactivo (<code>is-valid</code>/<code>is-invalid</code>), máscaras monetarias y telefónicas, y prevención de dobles envíos deshabilitando botones al interactuar.</p>
+        </div>
+        <div class="tier-box" style="border-left-color: #6366f1;">
+            <h3>Capa 2: Backend (Dominio &amp; Confianza)</h3>
+            <p>Validación obligatoria vía <code>DataAnnotations</code>. El servidor <strong>no confía</strong> en los totales enviados por el cliente: recalcula importes y verifica stock en transacciones.</p>
+        </div>
+        <div class="tier-box" style="border-left-color: #10b981;">
+            <h3>Capa 3: Base de Datos (Barrera Irrevocable)</h3>
+            <p>Esquema SQLite estricto con restricciones <code>CHECK</code> (precios y stocks positivos), índices únicos (evita duplicados) y llaves foráneas con <code>ON DELETE RESTRICT</code>.</p>
+        </div>
+    </div>
+
+    <div class="section-title">Matriz Técnica de Reglas de Validación</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 10%;">MÓDULO</th>
+                <th style="width: 9%;">ID</th>
+                <th style="width: 16%;">NOMBRE DE LA REGLA</th>
+                <th style="width: 21%;">FRONTEND (COMODIDAD / UX)</th>
+                <th style="width: 24%;">BACKEND (OBLIGATORIO)</th>
+                <th style="width: 20%;">BASE DE DATOS (BARRERA FINAL)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="module-cell">Categorías</td>
+                <td><span class="badge-id">VAL-CAT-01</span></td>
+                <td>Nombre y longitud</td>
+                <td>Requerido, contador visual de caracteres (3 a 50).</td>
+                <td><span class="code-tag">[Required]</span>, <span class="code-tag">[StringLength(50, MinimumLength=3)]</span></td>
+                <td><code>NOT NULL</code>, <code>VARCHAR(50)</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Categorías</td>
+                <td><span class="badge-id">VAL-CAT-02</span></td>
+                <td>Unicidad de categoría</td>
+                <td>Debounce 400ms para advertir si el nombre ya existe.</td>
+                <td>Comprobación insensible a mayúsculas (<span class="code-tag">ToLower()</span>).</td>
+                <td><code>UNIQUE INDEX (IX_Categorias_Nombre)</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Categorías</td>
+                <td><span class="badge-id">VAL-CAT-03</span></td>
+                <td>Integridad al eliminar</td>
+                <td>Modal advirtiendo si la categoría posee productos.</td>
+                <td>Bloqueo en controlador si <span class="code-tag">Productos.Any()</span> (HTTP 400).</td>
+                <td><code>FK (CategoriaId) ON DELETE RESTRICT</code></td>
+            </tr>
+
+            <tr>
+                <td class="module-cell">Productos</td>
+                <td><span class="badge-id">VAL-PROD-01</span></td>
+                <td>Nombre del producto</td>
+                <td>Campo requerido, feedback visual dinámico (3-100 car.).</td>
+                <td><span class="code-tag">[Required]</span>, <span class="code-tag">[StringLength(100, MinimumLength=3)]</span></td>
+                <td><code>NOT NULL</code>, <code>VARCHAR(100)</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Productos</td>
+                <td><span class="badge-id">VAL-PROD-02</span></td>
+                <td>Unicidad en categoría</td>
+                <td>Alerta si ya existe producto con igual nombre en la categoría.</td>
+                <td>Validación combinada: <span class="code-tag">Nombre == x &amp;&amp; CategoriaId == y</span></td>
+                <td><code>UNIQUE INDEX (Nombre, CategoriaId)</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Productos</td>
+                <td><span class="badge-id">VAL-PROD-03</span></td>
+                <td>Rango de Precio Venta</td>
+                <td>Input numérico con máscara (<span class="code-tag">step="0.01"</span>, <span class="code-tag">min="0.01"</span>).</td>
+                <td><span class="code-tag">[Range(0.01, 999999.99)]</span>, 2 decimales máx.</td>
+                <td><code>DECIMAL(18,2)</code>, <code>CHECK(Precio &gt; 0)</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Productos</td>
+                <td><span class="badge-id">VAL-PROD-04</span></td>
+                <td>Stock y Stock Mínimo</td>
+                <td>Inputs enteros no negativos. Alerta si Stock &le; Mínimo.</td>
+                <td><span class="code-tag">[Range(0, 1000000)]</span> para Stock y Stock_minimo.</td>
+                <td><code>CHECK(Stock &gt;= 0 AND Stock_minimo &gt;= 0)</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Productos</td>
+                <td><span class="badge-id">VAL-PROD-05</span></td>
+                <td>Categoría asignada</td>
+                <td>Dropdown obligatorio con placeholder deshabilitado.</td>
+                <td>Comprobación de existencia de <span class="code-tag">CategoriaId</span> en BD.</td>
+                <td><code>FOREIGN KEY REFERENCES Categorias(Id)</code></td>
+            </tr>
+
+            <tr>
+                <td class="module-cell">Clientes</td>
+                <td><span class="badge-id">VAL-CLI-01</span></td>
+                <td>Nombre / Razón Social</td>
+                <td>Requerido, longitud permitida de 3 a 120 caracteres.</td>
+                <td><span class="code-tag">[Required]</span>, <span class="code-tag">[StringLength(120, MinimumLength=3)]</span></td>
+                <td><code>NOT NULL</code>, <code>VARCHAR(120)</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Clientes</td>
+                <td><span class="badge-id">VAL-CLI-02</span></td>
+                <td>Formato y unicidad Email</td>
+                <td>Input <span class="code-tag">type="email"</span> con validación interactiva.</td>
+                <td><span class="code-tag">[EmailAddress]</span>, normalización minúsculas y trim.</td>
+                <td><code>UNIQUE INDEX WHERE Email IS NOT NULL</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Clientes</td>
+                <td><span class="badge-id">VAL-CLI-03</span></td>
+                <td>Formato de Teléfono</td>
+                <td>Máscara de entrada para formato telefónico nacional/int.</td>
+                <td>Regex estricto: <span class="code-tag">^\+?[0-9\s-]{7,20}$</span></td>
+                <td><code>VARCHAR(20) NULL</code></td>
+            </tr>
+
+            <tr>
+                <td class="module-cell">Ventas</td>
+                <td><span class="badge-id">VAL-VEN-01</span></td>
+                <td>Cliente seleccionado</td>
+                <td>Buscador reactivo. Bloquea venta si cliente es nulo.</td>
+                <td><span class="code-tag">ClienteId &gt; 0</span> y verificación de cliente en BD.</td>
+                <td><code>FK (ClienteId) ON DELETE RESTRICT</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Ventas</td>
+                <td><span class="badge-id">VAL-VEN-02</span></td>
+                <td>Canasta no vacía</td>
+                <td>Botón de "Realizar Venta" deshabilitado con carrito vacío.</td>
+                <td>Validación: <span class="code-tag">DetalleVentas.Count &gt; 0</span></td>
+                <td>Requerimiento transaccional; sin cabecera vacía.</td>
+            </tr>
+            <tr>
+                <td class="module-cell">Ventas</td>
+                <td><span class="badge-id">VAL-VEN-03</span></td>
+                <td>Control de Inventario</td>
+                <td>Bloqueo en UI al solicitar cantidad superior a stock.</td>
+                <td>Validación transaccional contra stock real en BD.</td>
+                <td><code>CHECK(Stock &gt;= 0)</code> previene sobreventa.</td>
+            </tr>
+            <tr>
+                <td class="module-cell">Ventas</td>
+                <td><span class="badge-id">VAL-VEN-04</span></td>
+                <td>Integridad de Totales</td>
+                <td>Precios en solo lectura; subtotal y total automáticos.</td>
+                <td><strong>Servidor ignora totales cliente</strong>: calcula desde BD.</td>
+                <td><code>DECIMAL(18,2)</code>, <code>CHECK(Total &gt;= 0)</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Ventas</td>
+                <td><span class="badge-id">VAL-VEN-05</span></td>
+                <td>Pago y Cambio</td>
+                <td>Bloqueo si <span class="code-tag">Recibido &lt; Total</span>. Muestra cambio exacto.</td>
+                <td><span class="code-tag">Recibido &gt;= Total</span> y <span class="code-tag">Cambio = Recibido - Total</span></td>
+                <td><code>CHECK(Recibido &gt;= Total AND Cambio &gt;= 0)</code></td>
+            </tr>
+
+            <tr>
+                <td class="module-cell">Detalle Venta</td>
+                <td><span class="badge-id">VAL-DET-01</span></td>
+                <td>Cantidad por ítem</td>
+                <td>Controles incrementales <span class="code-tag">+</span> / <span class="code-tag">-</span>, mínimo 1 unidad.</td>
+                <td><span class="code-tag">[Range(1, 100000)]</span>, producto existente y activo.</td>
+                <td><code>INTEGER NOT NULL</code>, <code>CHECK(Cantidad &gt; 0)</code></td>
+            </tr>
+            <tr>
+                <td class="module-cell">Detalle Venta</td>
+                <td><span class="badge-id">VAL-DET-02</span></td>
+                <td>Cálculo de Subtotal</td>
+                <td>Actualización reactiva en fila del carrito.</td>
+                <td>Recálculo mandatorio en backend: <span class="code-tag">Precio * Cantidad</span></td>
+                <td><code>DECIMAL(18,2)</code>, <code>CHECK(Subtotal &gt; 0)</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="footer-note">
+        <div>
+            <strong>Entorno de Pruebas Automatizadas:</strong> <code>tests/sistema_ventas.Tests</code> con xUnit 2.9 + FluentAssertions 7.2
+        </div>
+        <div class="test-pill">
+            &#10004; 20 de 20 Pruebas Unitarias y de BD Superadas (100% Cobertura de Reglas)
+        </div>
+    </div>
+
+</body>
+</html>

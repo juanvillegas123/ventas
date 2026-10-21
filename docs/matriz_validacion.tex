@@ -1,0 +1,120 @@
+\documentclass[10pt,a4paper,landscape]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-tabla]{babel}
+\usepackage[margin=1.5cm]{geometry}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{enumitem}
+
+% Paleta de Colores Corporativos Minimalistas
+\definecolor{primary}{RGB}{24, 24, 27}       % Zinc 900
+\definecolor{secondary}{RGB}{79, 70, 229}    % Indigo 600
+\definecolor{accent}{RGB}{14, 165, 233}      % Sky 500
+\definecolor{headerbg}{RGB}{244, 244, 245}   % Zinc 100
+\definecolor{rowalt}{RGB}{250, 250, 250}     % Zinc 50
+\definecolor{success}{RGB}{22, 101, 52}      % Emerald 800
+\definecolor{textdark}{RGB}{39, 39, 42}      % Zinc 800
+
+% Configuración de Hipervínculos
+\hypersetup{
+    colorlinks=true,
+    linkcolor=secondary,
+    urlcolor=accent,
+    pdftitle={Matriz de Validación en Tres Capas - VentasCore},
+    pdfauthor={Arquitectura de Software},
+    pdfsubject={Especificación Técnica de Validación e Integridad de Datos}
+}
+
+% Encabezados y Pies de Página
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textbf{VentasCore} $|$ Arquitectura de Validación e Integridad de Datos}
+\fancyhead[R]{\small\today}
+\fancyfoot[L]{\small Sistema de Ventas e Inventario - ASP.NET Core 10 \& EF Core}
+\fancyfoot[R]{\small Página \thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Formato de Secciones
+\titleformat{\section}{\large\bfseries\color{primary}}{}{0em}{}[\vspace{-0.5em}\rule{\textwidth}{0.8pt}]
+\titleformat{\subsection}{\normalsize\bfseries\color{secondary}}{}{0em}{}
+
+\begin{document}
+
+% --- Portada / Cabecera ---
+\begin{center}
+    {\LARGE\bfseries\color{primary} MATRIZ DE VALIDACIÓN EN TRES CAPAS}\\[0.3em]
+    {\large\color{secondary} Estrategia de Defensa en Profundidad y Entorno de Pruebas}\\[0.2em]
+    {\footnotesize\color{gray} Proyecto: \textbf{sistema\_ventas} $|$ Framework: \textbf{.NET 10.0} $|$ Motor de Base de Datos: \textbf{SQLite / EF Core 10}}
+\end{center}
+\vspace{0.8em}
+
+% --- 1. Resumen de Arquitectura ---
+\section*{1. Arquitectura de Defensa en Profundidad (Three-Tier Defense)}
+El sistema implementa una arquitectura rigurosa donde los datos atraviesan tres barreras de control antes de persistirse de forma definitiva:
+
+\begin{itemize}[leftmargin=1.5em, itemsep=0.1em]
+    \item \textbf{Capa 1: Frontend (Ergonomía y UX):} Valida en tiempo real mediante eventos reactivos, proporcionando feedback visual inmediato (\texttt{is-valid} / \texttt{is-invalid}), máscaras numéricas y telefónicas, y desactivación de botones de acción para prevenir dobles envíos.
+    \item \textbf{Capa 2: Backend (Dominio y Verdad Absoluta):} Obligatoria. Emplea \texttt{DataAnnotations} y DTOs fuertemente tipados. El servidor \textbf{no confía} en los totales ni precios calculados por el cliente: recalcula subtotales con datos de BD y verifica la disponibilidad de stock en transacciones aisladas. Respuestas estandarizadas bajo \textbf{RFC 7807 (ProblemDetails)}.
+    \item \textbf{Capa 3: Base de Datos (Última Barrera Irrevocable):} Restricciones a nivel de esquema DDL en SQLite: índices únicos compuestos, límites estrictos de longitud (\texttt{VARCHAR}), integridad referencial con \texttt{ON DELETE RESTRICT} y restricciones \texttt{CHECK} (\texttt{Precio > 0}, \texttt{Stock >= 0}, \texttt{Recibido >= Total}).
+\end{itemize}
+
+\vspace{0.8em}
+
+% --- 2. Matriz de Validación ---
+\section*{2. Matriz de Validación Técnica}
+
+\begin{table}[h!]
+\centering
+\small
+\renewcommand{\arraystretch}{1.2}
+\rowcolors{2}{white}{rowalt}
+\begin{tabularx}{\textwidth}{l l p{3.6cm} p{5.5cm} p{6.5cm} X}
+\toprule
+\rowcolor{headerbg}
+\textbf{MÓDULO} & \textbf{ID} & \textbf{Validación} & \textbf{Frontend (UX / Comodidad)} & \textbf{Backend (Regla Obligatoria)} & \textbf{Base de Datos (Barrera Final)} \\
+\midrule
+Categorías & \texttt{VAL-CAT-01} & Nombre y longitud & Requerido, contador visual (3 a 50 caracteres). & \texttt{[Required]}, \texttt{[StringLength(50, MinimumLength=3)]}. & \texttt{NOT NULL}, \texttt{VARCHAR(50)}. \\
+Categorías & \texttt{VAL-CAT-02} & Unicidad del nombre & Debounce 400ms con advertencia en foco perdido. & Consulta de existencia insensible a mayúsculas (\texttt{ToLower()}). & \texttt{UNIQUE INDEX (IX\_Categorias\_Nombre)}. \\
+Categorías & \texttt{VAL-CAT-03} & Integridad al eliminar & Modal que alerta si existen productos en la categoría. & Bloqueo en controlador si \texttt{Productos.Any()} (HTTP 400). & \texttt{FK (CategoriaId) ON DELETE RESTRICT}. \\
+\midrule
+Productos & \texttt{VAL-PROD-01} & Nombre del producto & Requerido, 3 a 100 caracteres, feedback dinámico. & \texttt{[Required]}, \texttt{[StringLength(100, MinimumLength=3)]}. & \texttt{NOT NULL}, \texttt{VARCHAR(100)}. \\
+Productos & \texttt{VAL-PROD-02} & Unicidad en categoría & Alerta visual si se duplica producto en misma categoría. & Validación combinada: \texttt{Nombre == x \&\& CategoriaId == y}. & \texttt{UNIQUE INDEX (Nombre, CategoriaId)}. \\
+Productos & \texttt{VAL-PROD-03} & Rango de Precio & Input numérico con máscara (\texttt{step="0.01"}, \texttt{min="0.01"}). & \texttt{[Range(0.01, 999999.99)]}, validación 2 decimales. & \texttt{DECIMAL(18,2)}, \texttt{CHECK(Precio > 0)}. \\
+Productos & \texttt{VAL-PROD-04} & Stock y Stock Mínimo & Enteros no negativos. Alerta si Stock $\le$ Mínimo. & \texttt{[Range(0, 1000000)]} en enteros no negativos. & \texttt{CHECK(Stock >= 0 AND Stock\_minimo >= 0)}. \\
+Productos & \texttt{VAL-PROD-05} & Categoría asignada & Dropdown obligatorio con placeholder deshabilitado. & Comprobación de existencia de \texttt{CategoriaId} en BD. & \texttt{FOREIGN KEY REFERENCES Categorias(Id)}. \\
+\midrule
+Clientes & \texttt{VAL-CLI-01} & Nombre / Razón Social & Requerido, longitud de 3 a 120 caracteres. & \texttt{[Required]}, \texttt{[StringLength(120, MinimumLength=3)]}. & \texttt{NOT NULL}, \texttt{VARCHAR(120)}. \\
+Clientes & \texttt{VAL-CLI-02} & Formato y unicidad Email & Input \texttt{type="email"}, feedback en evento \texttt{input}. & \texttt{[EmailAddress]}, normalización a minúsculas y trim. & \texttt{UNIQUE INDEX WHERE Email IS NOT NULL}. \\
+Clientes & \texttt{VAL-CLI-03} & Formato de Teléfono & Máscara de entrada (dígitos, guiones, 7 a 20 car.). & Regex estricto: \texttt{\textasciicircum\textbackslash+?[0-9\textbackslash s-]\{7,20\}\$}. & \texttt{VARCHAR(20) NULL}. \\
+\midrule
+Ventas & \texttt{VAL-VEN-01} & Cliente asignado & Buscador reactivo. Bloquea venta si cliente es nulo. & \texttt{ClienteId > 0}, verificación de existencia en BD. & \texttt{FK (ClienteId) ON DELETE RESTRICT}. \\
+Ventas & \texttt{VAL-VEN-02} & Carrito no vacío & Botón de venta inhabilitado si el carrito está vacío. & Validación: \texttt{DetalleVentas.Count > 0}. & Transacción requerida; no hay venta sin ítems. \\
+Ventas & \texttt{VAL-VEN-03} & Control de Inventario & Bloqueo en UI al solicitar cantidad superior a stock. & Validación concurrente contra stock real en BD. & \texttt{CHECK(Stock >= 0)} previene sobreventa. \\
+Ventas & \texttt{VAL-VEN-04} & Integridad de Precios & Precios en solo lectura; total reactivo en pantalla. & \textbf{Servidor ignora totales cliente}: calcula desde BD. & \texttt{DECIMAL(18,2)}, \texttt{CHECK(Total >= 0)}. \\
+Ventas & \texttt{VAL-VEN-05} & Pago y Cambio & Bloqueo si \texttt{Recibido < Total}. Cálculo de cambio. & \texttt{Recibido >= Total}, \texttt{Cambio = Recibido - Total}. & \texttt{CHECK(Recibido >= Total AND Cambio >= 0)}. \\
+\midrule
+Detalle Venta & \texttt{VAL-DET-01} & Cantidad por producto & Controles numéricos \texttt{+} / \texttt{-}, mínimo 1 unidad. & \texttt{[Range(1, 100000)]}, producto activo requerido. & \texttt{INTEGER NOT NULL}, \texttt{CHECK(Cantidad > 0)}. \\
+Detalle Venta & \texttt{VAL-DET-02} & Cálculo de Subtotal & Actualización instantánea en fila del carrito. & Recálculo forzoso en backend: \texttt{Precio * Cantidad}. & \texttt{DECIMAL(18,2)}, \texttt{CHECK(Subtotal > 0)}. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\vspace{0.5em}
+
+% --- 3. Resultados de Pruebas ---
+\section*{3. Certificación del Entorno de Pruebas Automatizadas}
+Se implementó el proyecto satélite \textbf{\texttt{tests/sistema\_ventas.Tests}} con \textbf{xUnit 2.9} y \textbf{FluentAssertions 7.2}, ejecutando pruebas aisladas con SQLite en memoria (\texttt{DataSource=:memory:}):
+
+\begin{itemize}[leftmargin=1.5em, itemsep=0.1em]
+    \item \textbf{Pruebas de Frontera en Base de Datos (\texttt{DatabaseConstraintsTests}):} Verifican que inserciones directas que violen \texttt{CHECK} (precio negativo, stock negativo, cantidad cero o cambio inválido) o \texttt{UNIQUE} (duplicados de categorías, productos o emails) sean irrevocablemente abortadas con \texttt{DbUpdateException}.
+    \item \textbf{Pruebas de Modelos y Lógica de Negocio (\texttt{ModelValidationTests}):} Verifican \texttt{DataAnnotations}, rechazo de emails malformados, nombres cortos y exactitud en algoritmos de cálculo de totales y cambio.
+    \item \textbf{Resultado de Ejecución:} \textcolor{success}{\textbf{20 de 20 pruebas ejecutadas con éxito (100\% de efectividad)}}.
+\end{itemize}
+
+\end{document}
