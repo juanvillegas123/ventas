@@ -25,9 +25,12 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
+          security: loose
           local-dir: ./publish/
-          server-dir: /wwwroot/
+          server-dir: ./
           exclude: |
-            */.git
-            */.git/**
-            *sistema_ventas.db
+            **/.git*
+            **/.git*/**
+            *.db
+            *.db-shm
+            *.db-wal
