@@ -274,29 +274,47 @@
                     <span>VentasCore</span>
                 </a>
 
-                <nav class="d-none d-md-flex align-items-center gap-1">
-                    <a class="nav-link-minimal" asp-controller="Home" asp-action="Index">
-                        <i class="bi bi-grid-1x2"></i> Dashboard
-                    </a>
-                    <a class="nav-link-minimal" asp-controller="Ventas" asp-action="Index">
-                        <i class="bi bi-receipt"></i> Ventas
-                    </a>
-                    <a class="nav-link-minimal" asp-controller="Productos" asp-action="Index">
-                        <i class="bi bi-box"></i> Productos
-                    </a>
-                    <a class="nav-link-minimal" asp-controller="Categorias" asp-action="Index">
-                        <i class="bi bi-tag"></i> Categorías
-                    </a>
-                    <a class="nav-link-minimal" asp-controller="Clientes" asp-action="Index">
-                        <i class="bi bi-people"></i> Clientes
-                    </a>
-                </nav>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <nav class="d-none d-md-flex align-items-center gap-1">
+                        <a class="nav-link-minimal" asp-controller="Home" asp-action="Index">
+                            <i class="bi bi-grid-1x2"></i> Dashboard
+                        </a>
+                        <a class="nav-link-minimal" asp-controller="Ventas" asp-action="Index">
+                            <i class="bi bi-receipt"></i> Ventas
+                        </a>
+                        <a class="nav-link-minimal" asp-controller="Productos" asp-action="Index">
+                            <i class="bi bi-box"></i> Productos
+                        </a>
+                        <a class="nav-link-minimal" asp-controller="Categorias" asp-action="Index">
+                            <i class="bi bi-tag"></i> Categorías
+                        </a>
+                        <a class="nav-link-minimal" asp-controller="Clientes" asp-action="Index">
+                            <i class="bi bi-people"></i> Clientes
+                        </a>
+                        <a class="nav-link-minimal" asp-controller="Reportes" asp-action="Index">
+                            <i class="bi bi-file-earmark-bar-graph"></i> Reportes
+                        </a>
+                    </nav>
+                }
             </div>
 
             <div class="d-flex align-items-center gap-2">
-                <a asp-controller="Ventas" asp-action="Create" class="btn-minimal-dark text-decoration-none">
-                    <i class="bi bi-plus-lg"></i> Nueva Venta
-                </a>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <a asp-controller="Ventas" asp-action="Create" class="btn-minimal-dark text-decoration-none">
+                        <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Nueva Venta</span>
+                    </a>
+                    
+                    <span class="badge-minimal badge-minimal-neutral d-none d-lg-inline-flex align-items-center gap-1 py-1 px-2 ms-1">
+                        <i class="bi bi-person-circle text-primary"></i>
+                        <span>@(User.Identity.Name ?? "Usuario")</span>
+                    </span>
+
+                    <a asp-controller="Account" asp-action="Logout" class="btn-minimal-outline text-danger text-decoration-none" title="Cerrar Sesión">
+                        <i class="bi bi-box-arrow-right"></i> <span class="d-none d-sm-inline">Salir</span>
+                    </a>
+                }
             </div>
         </div>
     </header>

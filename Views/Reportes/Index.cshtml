@@ -1,0 +1,742 @@
+@model sistema_ventas.ViewModels.ReportesIndexViewModel
+@{
+    ViewData["Title"] = "Centro de Reportes y Analítica";
+}
+
+<style>
+    /* Estilos específicos para la vista de reportes */
+    .report-kpi-card {
+        background: #ffffff;
+        border: 1px solid var(--border-subtle);
+        border-radius: 12px;
+        padding: 1.15rem 1.25rem;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .report-kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    .report-kpi-label {
+        font-size: 0.76rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: var(--text-muted);
+        margin-bottom: 0.35rem;
+    }
+    .report-kpi-val {
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: var(--text-title);
+        line-height: 1.1;
+    }
+    .report-kpi-sub {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-top: 0.35rem;
+    }
+
+    .report-nav-pill {
+        border-radius: 8px;
+        padding: 0.55rem 1rem;
+        font-weight: 500;
+        font-size: 0.88rem;
+        color: var(--text-muted);
+        background: transparent;
+        border: 1px solid transparent;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        text-decoration: none;
+    }
+    .report-nav-pill:hover {
+        background-color: #f4f4f5;
+        color: var(--text-title);
+    }
+    .report-nav-pill.active {
+        background-color: #18181b;
+        color: #ffffff;
+        font-weight: 600;
+    }
+
+    .preset-btn {
+        font-size: 0.78rem;
+        padding: 0.25rem 0.65rem;
+        border-radius: 6px;
+        border: 1px solid var(--border-subtle);
+        background: #ffffff;
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: all 0.12s ease;
+    }
+    .preset-btn:hover {
+        background: #f4f4f5;
+        color: var(--text-title);
+    }
+    .preset-btn.active {
+        background: #18181b;
+        color: #ffffff;
+        border-color: #18181b;
+        font-weight: 600;
+    }
+
+    .accordion-button-clean {
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0.5rem 0;
+        font-size: 0.82rem;
+        color: #4f46e5 !important;
+        font-weight: 600;
+    }
+
+    /* Print Stylesheet Especializada */
+    @@media print {
+        header.site-header, 
+        footer.footer-minimal,
+        .no-print,
+        .btn-minimal-dark,
+        .btn-minimal-outline,
+        .nav-reportes-tabs,
+        .filter-panel,
+        .accordion-button-clean {
+            display: none !important;
+        }
+
+        body, main.container {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            background: #ffffff !important;
+        }
+
+        .card-minimal {
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+        }
+
+        .print-header {
+            display: block !important;
+            border-bottom: 2px solid #18181b;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+        }
+
+        .table {
+            font-size: 9pt !important;
+        }
+        .table thead th {
+            background-color: #f4f4f5 !important;
+            color: #000000 !important;
+            border-top: 1px solid #000 !important;
+            border-bottom: 1px solid #000 !important;
+        }
+    }
+
+    .print-header {
+        display: none;
+    }
+</style>
+
+<!-- Membrete Exclusivo para Impresión -->
+<div class="print-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2 class="h4 fw-bold mb-0 text-dark">VentasCore &mdash; Reporte Oficial</h2>
+            <p class="text-muted small mb-0">Sistema de Ventas, Inventario y Cartera de Clientes</p>
+        </div>
+        <div class="text-end small text-muted">
+            <div><strong>Fecha de emisión:</strong> @DateTime.Now.ToString("dd/MM/yyyy HH:mm")</div>
+            <div><strong>Emitido por:</strong> @(User.Identity?.Name ?? "Administrador")</div>
+        </div>
+    </div>
+</div>
+
+<!-- Header de Página en Pantalla -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4 no-print">
+    <div>
+        <h1 class="h4 fw-bold text-dark mb-1">Centro de Reportes y Analítica</h1>
+        <p class="text-muted small mb-0">Genera reportes detallados con filtros avanzados, métricas clave, exportación a Excel e impresión.</p>
+    </div>
+
+    <!-- Botones de Acción Global -->
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" onclick="window.print()" class="btn-minimal-outline">
+            <i class="bi bi-printer"></i> Imprimir / PDF
+        </button>
+
+        @if (Model.ActiveTab == "ventas")
+        {
+            <a asp-action="ExportarVentasCsv" 
+               asp-route-fechaInicio="@(Model.VentasReporte.FechaInicio?.ToString("yyyy-MM-dd"))"
+               asp-route-fechaFin="@(Model.VentasReporte.FechaFin?.ToString("yyyy-MM-dd"))"
+               asp-route-clienteId="@Model.VentasReporte.ClienteId"
+               class="btn-minimal-dark text-decoration-none">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Exportar a Excel
+            </a>
+        }
+        else if (Model.ActiveTab == "inventario")
+        {
+            <a asp-action="ExportarInventarioCsv" 
+               asp-route-categoriaId="@Model.InventarioReporte.CategoriaId"
+               asp-route-estadoStock="@Model.InventarioReporte.EstadoStock"
+               class="btn-minimal-dark text-decoration-none">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Exportar a Excel
+            </a>
+        }
+        else
+        {
+            <a asp-action="ExportarClientesCsv" 
+               asp-route-buscarCliente="@Model.ClientesReporte.TerminoBusqueda"
+               asp-route-ordenarClientes="@Model.ClientesReporte.OrdenarPor"
+               class="btn-minimal-dark text-decoration-none">
+                <i class="bi bi-file-earmark-spreadsheet"></i> Exportar a Excel
+            </a>
+        }
+    </div>
+</div>
+
+<!-- Pestañas de Navegación de Reportes -->
+<div class="d-flex align-items-center gap-2 mb-4 nav-reportes-tabs border-bottom pb-2 no-print overflow-auto">
+    <a asp-action="Index" asp-route-tab="ventas" 
+       class="report-nav-pill @(Model.ActiveTab == "ventas" ? "active" : "")">
+        <i class="bi bi-receipt-cutoff"></i> Reporte de Ventas
+    </a>
+    <a asp-action="Index" asp-route-tab="inventario" 
+       class="report-nav-pill @(Model.ActiveTab == "inventario" ? "active" : "")">
+        <i class="bi bi-boxes"></i> Stock por Categoría
+    </a>
+    <a asp-action="Index" asp-route-tab="clientes" 
+       class="report-nav-pill @(Model.ActiveTab == "clientes" ? "active" : "")">
+        <i class="bi bi-person-lines-fill"></i> Cartera de Clientes
+    </a>
+</div>
+
+<!-- ============================================================== -->
+<!-- PESTAÑA 1: REPORTE DE VENTAS                                   -->
+<!-- ============================================================== -->
+@if (Model.ActiveTab == "ventas")
+{
+    <!-- Panel de Filtros -->
+    <div class="card-minimal p-3 mb-4 filter-panel no-print border shadow-sm">
+        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+            <input type="hidden" name="tab" value="ventas" />
+
+            <!-- Presets rápidos -->
+            <div class="col-12 mb-1">
+                <div class="d-flex flex-wrap align-items-center gap-1">
+                    <span class="small text-muted fw-semibold me-2">Rango rápido:</span>
+                    <a asp-action="Index" asp-route-tab="ventas" asp-route-preset="hoy" 
+                       class="preset-btn @(Model.VentasReporte.Preset == "hoy" ? "active" : "")">Hoy</a>
+                    <a asp-action="Index" asp-route-tab="ventas" asp-route-preset="semana" 
+                       class="preset-btn @(Model.VentasReporte.Preset == "semana" ? "active" : "")">Esta Semana</a>
+                    <a asp-action="Index" asp-route-tab="ventas" asp-route-preset="mes" 
+                       class="preset-btn @(Model.VentasReporte.Preset == "mes" ? "active" : "")">Este Mes</a>
+                    <a asp-action="Index" asp-route-tab="ventas" asp-route-preset="anio" 
+                       class="preset-btn @(Model.VentasReporte.Preset == "anio" ? "active" : "")">Este Año</a>
+                    <a asp-action="Index" asp-route-tab="ventas" asp-route-preset="todos" 
+                       class="preset-btn @(Model.VentasReporte.Preset == "todos" ? "active" : "")">Histórico Completo</a>
+                </div>
+            </div>
+
+            <!-- Fecha Inicio -->
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label small fw-semibold text-muted mb-1">Desde</label>
+                <input type="date" name="fechaInicio" class="form-control form-control-minimal" 
+                       value="@(Model.VentasReporte.FechaInicio?.ToString("yyyy-MM-dd"))" />
+            </div>
+
+            <!-- Fecha Fin -->
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label small fw-semibold text-muted mb-1">Hasta</label>
+                <input type="date" name="fechaFin" class="form-control form-control-minimal" 
+                       value="@(Model.VentasReporte.FechaFin?.ToString("yyyy-MM-dd"))" />
+            </div>
+
+            <!-- Filtro Cliente -->
+            <div class="col-12 col-sm-8 col-md-4">
+                <label class="form-label small fw-semibold text-muted mb-1">Cliente</label>
+                <select name="clienteId" class="form-select form-control-minimal">
+                    <option value="">-- Todos los clientes --</option>
+                    @foreach (var c in Model.VentasReporte.ListaClientes)
+                    {
+                        <option value="@c.Id" selected="@(Model.VentasReporte.ClienteId == c.Id)">
+                            @c.Nombre @(string.IsNullOrEmpty(c.Telefono) ? "" : $"({c.Telefono})")
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Botones -->
+            <div class="col-12 col-sm-4 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn-minimal-dark w-100 justify-content-center">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+                <a asp-action="Index" asp-route-tab="ventas" asp-route-preset="mes" class="btn-minimal-outline text-decoration-none" title="Restablecer">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tarjetas de Métricas (KPIs) -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Total Facturado</div>
+                <div class="report-kpi-val text-success">$@Model.VentasReporte.TotalFacturado.ToString("N2")</div>
+                <div class="report-kpi-sub">En el período filtrado</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Cantidad de Ventas</div>
+                <div class="report-kpi-val">@Model.VentasReporte.CantidadVentas</div>
+                <div class="report-kpi-sub">Transacciones registradas</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Ticket Promedio</div>
+                <div class="report-kpi-val text-primary">$@Model.VentasReporte.TicketPromedio.ToString("N2")</div>
+                <div class="report-kpi-sub">Monto medio por venta</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Unidades Vendidas</div>
+                <div class="report-kpi-val">@Model.VentasReporte.TotalUnidadesVendidas</div>
+                <div class="report-kpi-sub">Artículos despachados</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla Detallada de Ventas -->
+    <div class="card-minimal p-0 border shadow-sm overflow-hidden mb-4">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white">
+            <span class="small fw-semibold text-dark">Listado Detallado de Ventas (@Model.VentasReporte.Ventas.Count registros)</span>
+            <span class="text-muted small">
+                @if (Model.VentasReporte.FechaInicio.HasValue && Model.VentasReporte.FechaFin.HasValue)
+                {
+                    <span>Período: <strong>@Model.VentasReporte.FechaInicio.Value.ToString("dd/MM/yyyy")</strong> al <strong>@Model.VentasReporte.FechaFin.Value.ToString("dd/MM/yyyy")</strong></span>
+                }
+            </span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr class="small text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.03em;">
+                        <th class="ps-3" style="width: 70px;">ID</th>
+                        <th>Fecha y Hora</th>
+                        <th>Cliente</th>
+                        <th class="text-center">Artículos</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end">Recibido</th>
+                        <th class="text-end pe-3">Cambio</th>
+                        <th class="text-center no-print" style="width: 120px;">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    @if (Model.VentasReporte.Ventas.Any())
+                    {
+                        @foreach (var v in Model.VentasReporte.Ventas)
+                        {
+                            <tr>
+                                <td class="ps-3 font-monospace fw-semibold text-muted">#@v.Id</td>
+                                <td>
+                                    <div class="fw-medium text-dark">@v.Fecha.ToString("dd/MM/yyyy")</div>
+                                    <div class="text-muted" style="font-size: 0.72rem;">@v.Fecha.ToString("HH:mm:ss")</div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold text-dark">@v.ClienteNombre</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge-minimal badge-minimal-neutral">@v.ItemsCount un.</span>
+                                </td>
+                                <td class="text-end fw-bold text-dark">
+                                    $@v.Total.ToString("N2")
+                                </td>
+                                <td class="text-end text-muted">
+                                    $@v.Recibido.ToString("N2")
+                                </td>
+                                <td class="text-end pe-3 text-muted">
+                                    $@v.Cambio.ToString("N2")
+                                </td>
+                                <td class="text-center no-print">
+                                    <button class="btn btn-sm btn-link text-decoration-none accordion-button-clean" 
+                                            type="button" data-bs-toggle="collapse" data-bs-target="#detalle-@v.Id" aria-expanded="false">
+                                        <i class="bi bi-chevron-down"></i> Ver Ítems
+                                    </button>
+                                </td>
+                            </tr>
+                            <!-- Fila colapsable con desglose de ítems -->
+                            <tr class="collapse bg-light" id="detalle-@v.Id">
+                                <td colspan="8" class="p-3">
+                                    <div class="card p-3 border-0 bg-white shadow-sm" style="border-radius: 8px;">
+                                        <div class="small fw-bold text-dark mb-2">Desglose de productos de la Venta #@v.Id:</div>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered mb-0" style="font-size: 0.8rem;">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Producto</th>
+                                                        <th>Categoría</th>
+                                                        <th class="text-center">Cantidad</th>
+                                                        <th class="text-end">Precio Unitario</th>
+                                                        <th class="text-end">Subtotal</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var d in v.Detalles)
+                                                    {
+                                                        <tr>
+                                                            <td class="fw-medium">@d.ProductoNombre</td>
+                                                            <td class="text-muted">@d.CategoriaNombre</td>
+                                                            <td class="text-center">@d.Cantidad</td>
+                                                            <td class="text-end">$@d.Precio.ToString("N2")</td>
+                                                            <td class="text-end fw-semibold">$@d.Subtotal.ToString("N2")</td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No se encontraron ventas con los filtros aplicados.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- ============================================================== -->
+<!-- PESTAÑA 2: REPORTE DE INVENTARIO Y STOCK                       -->
+<!-- ============================================================== -->
+@if (Model.ActiveTab == "inventario")
+{
+    <!-- Panel de Filtros -->
+    <div class="card-minimal p-3 mb-4 filter-panel no-print border shadow-sm">
+        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+            <input type="hidden" name="tab" value="inventario" />
+
+            <!-- Filtro Categoría -->
+            <div class="col-12 col-sm-6 col-md-4">
+                <label class="form-label small fw-semibold text-muted mb-1">Filtrar por Categoría</label>
+                <select name="categoriaId" class="form-select form-control-minimal">
+                    <option value="">-- Todas las categorías --</option>
+                    @foreach (var cat in Model.InventarioReporte.ListaCategorias)
+                    {
+                        <option value="@cat.Id" selected="@(Model.InventarioReporte.CategoriaId == cat.Id)">
+                            @cat.Nombre
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <!-- Estado de Stock -->
+            <div class="col-12 col-sm-6 col-md-3">
+                <label class="form-label small fw-semibold text-muted mb-1">Nivel de Stock</label>
+                <select name="estadoStock" class="form-select form-control-minimal">
+                    <option value="todos" selected="@(Model.InventarioReporte.EstadoStock == "todos")">Todos los estados</option>
+                    <option value="normal" selected="@(Model.InventarioReporte.EstadoStock == "normal")">Stock Normal</option>
+                    <option value="bajo" selected="@(Model.InventarioReporte.EstadoStock == "bajo")">Stock Bajo (Crítico)</option>
+                    <option value="agotado" selected="@(Model.InventarioReporte.EstadoStock == "agotado")">Sin Stock (Agotado)</option>
+                </select>
+            </div>
+
+            <!-- Búsqueda por Nombre -->
+            <div class="col-12 col-sm-8 col-md-3">
+                <label class="form-label small fw-semibold text-muted mb-1">Buscar Producto</label>
+                <input type="text" name="buscarProducto" class="form-control form-control-minimal" 
+                       placeholder="Nombre de producto..." value="@Model.InventarioReporte.TerminoBusqueda" />
+            </div>
+
+            <!-- Botones -->
+            <div class="col-12 col-sm-4 col-md-2 d-flex gap-2">
+                <button type="submit" class="btn-minimal-dark w-100 justify-content-center">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+                <a asp-action="Index" asp-route-tab="inventario" class="btn-minimal-outline text-decoration-none" title="Limpiar">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- KPIs de Inventario -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Valorización de Almacén</div>
+                <div class="report-kpi-val text-primary">$@Model.InventarioReporte.ValorizacionTotal.ToString("N2")</div>
+                <div class="report-kpi-sub">Cálculo: (Stock * Precio)</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Total Productos</div>
+                <div class="report-kpi-val">@Model.InventarioReporte.TotalProductos</div>
+                <div class="report-kpi-sub">Variedad en catálogo</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Unidades en Existencia</div>
+                <div class="report-kpi-val">@Model.InventarioReporte.TotalUnidadesEnStock</div>
+                <div class="report-kpi-sub">Artículos físicos totales</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Productos Críticos</div>
+                <div class="report-kpi-val @(Model.InventarioReporte.ProductosStockBajo + Model.InventarioReporte.ProductosSinStock > 0 ? "text-danger" : "text-muted")">
+                    @(Model.InventarioReporte.ProductosStockBajo + Model.InventarioReporte.ProductosSinStock)
+                </div>
+                <div class="report-kpi-sub">
+                    <span class="text-warning">@Model.InventarioReporte.ProductosStockBajo bajos</span>, 
+                    <span class="text-danger">@Model.InventarioReporte.ProductosSinStock agotados</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla Detallada de Inventario -->
+    <div class="card-minimal p-0 border shadow-sm overflow-hidden mb-4">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white">
+            <span class="small fw-semibold text-dark">Inventario y Stock por Categoría (@Model.InventarioReporte.Productos.Count registros)</span>
+            <span class="text-muted small">Valor total acumulado: <strong>$@Model.InventarioReporte.ValorizacionTotal.ToString("N2")</strong></span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr class="small text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.03em;">
+                        <th class="ps-3" style="width: 70px;">ID</th>
+                        <th>Producto</th>
+                        <th>Categoría</th>
+                        <th class="text-end">Precio Unit.</th>
+                        <th class="text-center">Stock Actual</th>
+                        <th class="text-center">Stock Mínimo</th>
+                        <th class="text-end">Valorización</th>
+                        <th class="text-center pe-3">Estado</th>
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    @if (Model.InventarioReporte.Productos.Any())
+                    {
+                        @foreach (var p in Model.InventarioReporte.Productos)
+                        {
+                            <tr>
+                                <td class="ps-3 font-monospace text-muted">#@p.Id</td>
+                                <td class="fw-semibold text-dark">@p.Nombre</td>
+                                <td>
+                                    <span class="badge-minimal badge-minimal-neutral">
+                                        <i class="bi bi-tag-fill me-1"></i>@p.CategoriaNombre
+                                    </span>
+                                </td>
+                                <td class="text-end text-muted">$@p.Precio.ToString("N2")</td>
+                                <td class="text-center fw-bold @(p.Stock <= p.StockMinimo ? (p.Stock == 0 ? "text-danger" : "text-warning") : "text-dark")">
+                                    @p.Stock
+                                </td>
+                                <td class="text-center text-muted">@p.StockMinimo</td>
+                                <td class="text-end fw-bold text-dark">$@p.ValorTotalStock.ToString("N2")</td>
+                                <td class="text-center pe-3">
+                                    @if (p.Estado == "Agotado")
+                                    {
+                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1 rounded-pill">
+                                            Agotado (0)
+                                        </span>
+                                    }
+                                    else if (p.Estado == "Bajo")
+                                    {
+                                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-1 rounded-pill">
+                                            Stock Bajo
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 rounded-pill">
+                                            Normal
+                                        </span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No se encontraron productos con los filtros seleccionados.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+<!-- ============================================================== -->
+<!-- PESTAÑA 3: REPORTE DE CLIENTES Y COMPORTAMIENTO                -->
+<!-- ============================================================== -->
+@if (Model.ActiveTab == "clientes")
+{
+    <!-- Panel de Filtros -->
+    <div class="card-minimal p-3 mb-4 filter-panel no-print border shadow-sm">
+        <form method="get" asp-action="Index" class="row g-3 align-items-end">
+            <input type="hidden" name="tab" value="clientes" />
+
+            <!-- Búsqueda -->
+            <div class="col-12 col-sm-6 col-md-5">
+                <label class="form-label small fw-semibold text-muted mb-1">Buscar Cliente</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0 text-muted" style="border-radius: 8px 0 0 8px;">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="buscarCliente" class="form-control form-control-minimal border-start-0" 
+                           placeholder="Nombre, correo o teléfono..." value="@Model.ClientesReporte.TerminoBusqueda" />
+                </div>
+            </div>
+
+            <!-- Ordenar por -->
+            <div class="col-12 col-sm-6 col-md-4">
+                <label class="form-label small fw-semibold text-muted mb-1">Ordenar Registros</label>
+                <select name="ordenarClientes" class="form-select form-control-minimal">
+                    <option value="mas_gastado" selected="@(Model.ClientesReporte.OrdenarPor == "mas_gastado")">Mayor Monto Total Comprado</option>
+                    <option value="mas_compras" selected="@(Model.ClientesReporte.OrdenarPor == "mas_compras")">Mayor Cantidad de Compras</option>
+                    <option value="reciente" selected="@(Model.ClientesReporte.OrdenarPor == "reciente")">Última Compra Más Reciente</option>
+                    <option value="nombre" selected="@(Model.ClientesReporte.OrdenarPor == "nombre")">Alfabético (Nombre A-Z)</option>
+                </select>
+            </div>
+
+            <!-- Botones -->
+            <div class="col-12 col-md-3 d-flex gap-2">
+                <button type="submit" class="btn-minimal-dark w-100 justify-content-center">
+                    <i class="bi bi-funnel"></i> Filtrar
+                </button>
+                <a asp-action="Index" asp-route-tab="clientes" class="btn-minimal-outline text-decoration-none" title="Limpiar">
+                    <i class="bi bi-arrow-counterclockwise"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- KPIs de Clientes -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Cartera Registrada</div>
+                <div class="report-kpi-val">@Model.ClientesReporte.TotalClientes</div>
+                <div class="report-kpi-sub">Total clientes en base de datos</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Clientes Activos</div>
+                <div class="report-kpi-val text-success">@Model.ClientesReporte.ClientesConCompras</div>
+                <div class="report-kpi-sub">Con al menos 1 compra realizada</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Total Facturado Cartera</div>
+                <div class="report-kpi-val text-primary">$@Model.ClientesReporte.TotalHistoricoCompras.ToString("N2")</div>
+                <div class="report-kpi-sub">Compras acumuladas</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="report-kpi-card">
+                <div class="report-kpi-label">Gasto Medio por Cliente</div>
+                <div class="report-kpi-val">$@Model.ClientesReporte.PromedioPorCliente.ToString("N2")</div>
+                <div class="report-kpi-sub">Entre clientes activos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabla Detallada de Clientes -->
+    <div class="card-minimal p-0 border shadow-sm overflow-hidden mb-4">
+        <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-white">
+            <span class="small fw-semibold text-dark">Historial de Clientes y Actividad (@Model.ClientesReporte.Clientes.Count registros)</span>
+            <span class="text-muted small">Ordenado por criterio seleccionado</span>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr class="small text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.03em;">
+                        <th class="ps-3" style="width: 70px;">ID</th>
+                        <th>Nombre / Razón Social</th>
+                        <th>Contacto (Email / Teléfono)</th>
+                        <th class="text-center">Ventas Realizadas</th>
+                        <th class="text-end">Total Comprado</th>
+                        <th class="text-end">Ticket Promedio</th>
+                        <th class="text-end pe-3">Última Compra</th>
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    @if (Model.ClientesReporte.Clientes.Any())
+                    {
+                        @foreach (var c in Model.ClientesReporte.Clientes)
+                        {
+                            <tr>
+                                <td class="ps-3 font-monospace text-muted">#@c.Id</td>
+                                <td>
+                                    <span class="fw-semibold text-dark">@c.Nombre</span>
+                                </td>
+                                <td>
+                                    <div class="text-muted"><i class="bi bi-envelope me-1"></i>@(c.Email ?? "No registrado")</div>
+                                    <div class="text-muted" style="font-size: 0.72rem;"><i class="bi bi-telephone me-1"></i>@(c.Telefono ?? "Sin teléfono")</div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge-minimal @(c.CantidadVentas > 0 ? "badge-minimal-neutral" : "text-muted")">
+                                        @c.CantidadVentas @(c.CantidadVentas == 1 ? "venta" : "ventas")
+                                    </span>
+                                </td>
+                                <td class="text-end fw-bold text-dark">
+                                    $@c.TotalComprado.ToString("N2")
+                                </td>
+                                <td class="text-end text-muted">
+                                    $@c.TicketPromedio.ToString("N2")
+                                </td>
+                                <td class="text-end pe-3">
+                                    @if (c.UltimaCompra.HasValue)
+                                    {
+                                        <div class="fw-medium text-dark">@c.UltimaCompra.Value.ToString("dd/MM/yyyy")</div>
+                                        <div class="text-muted" style="font-size: 0.72rem;">@c.UltimaCompra.Value.ToString("HH:mm")</div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted fst-italic">Sin compras aún</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No se encontraron clientes con el criterio de búsqueda.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
