@@ -18,6 +18,57 @@ jobs:
       - name: Publicar
         run: dotnet publish sistema_ventas.csproj -c Release -o publish
 
+      - name: Diagnosticar FTP y Colocar app_offline.htm
+        id: prep
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        run: |
+          python3 - << 'EOF'
+          import os, ssl, ftplib, io
+
+          server = os.environ.get('FTP_SERVER', '')
+          user = os.environ.get('FTP_USERNAME', '')
+          pw = os.environ.get('FTP_PASSWORD', '')
+
+          ctx = ssl.create_default_context()
+          ctx.check_hostname = False
+          ctx.verify_mode = ssl.CERT_NONE
+
+          target_dir = "./"
+          try:
+              ftp = ftplib.FTP_TLS(context=ctx)
+              ftp.connect(server, 21, timeout=30)
+              ftp.login(user, pw)
+              ftp.prot_p()
+
+              remote_items = [f.strip() for f in ftp.nlst()]
+              print(f"Archivos y carpetas en raiz remota FTP: {remote_items}")
+
+              # Si existe carpeta wwwroot, el sitio de MonsterASP se sirve desde allí
+              if any(item.lower() == 'wwwroot' for item in remote_items):
+                  target_dir = "wwwroot/"
+                  print("Detectada carpeta 'wwwroot'. Se usará 'wwwroot/' como destino de publicación.")
+              else:
+                  print("No se detectó subcarpeta 'wwwroot'. Se usará './' como destino de publicación.")
+
+              # Subir app_offline.htm para que IIS libere los bloqueos de sistema_ventas.dll
+              offline_content = b"<!DOCTYPE html><html><head><meta charset='utf-8'><title>Mantenimiento</title></head><body><h2>Actualizando sistema... Por favor espere.</h2></body></html>"
+              offline_target = f"{target_dir}app_offline.htm" if target_dir != "./" else "app_offline.htm"
+              ftp.storbinary(f"STOR {offline_target}", io.BytesIO(offline_content))
+              print(f"Subido {offline_target} con éxito para liberar bloqueos de DLL en IIS.")
+              ftp.quit()
+          except Exception as e:
+              print(f"Aviso durante preparación FTP: {e}")
+
+          # Guardar target_dir en GITHUB_OUTPUT
+          gh_output = os.environ.get('GITHUB_OUTPUT')
+          if gh_output:
+              with open(gh_output, 'a') as f:
+                  f.write(f"target_dir={target_dir}\n")
+          EOF
+
       - name: Subir por FTPS
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
@@ -27,10 +78,44 @@ jobs:
           protocol: ftps
           security: loose
           local-dir: ./publish/
-          server-dir: ./
+          server-dir: ${{ steps.prep.outputs.target_dir || './' }}
           exclude: |
             **/.git*
             **/.git*/**
             *.db
             *.db-shm
             *.db-wal
+
+      - name: Reiniciar Sitio en MonsterASP (Remover app_offline.htm)
+        if: always()
+        env:
+          FTP_SERVER: ${{ secrets.FTP_SERVER }}
+          FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          TARGET_DIR: ${{ steps.prep.outputs.target_dir || './' }}
+        run: |
+          python3 - << 'EOF'
+          import os, ssl, ftplib
+
+          server = os.environ.get('FTP_SERVER', '')
+          user = os.environ.get('FTP_USERNAME', '')
+          pw = os.environ.get('FTP_PASSWORD', '')
+          target_dir = os.environ.get('TARGET_DIR', './')
+
+          ctx = ssl.create_default_context()
+          ctx.check_hostname = False
+          ctx.verify_mode = ssl.CERT_NONE
+
+          try:
+              ftp = ftplib.FTP_TLS(context=ctx)
+              ftp.connect(server, 21, timeout=30)
+              ftp.login(user, pw)
+              ftp.prot_p()
+
+              offline_target = f"{target_dir}app_offline.htm" if target_dir != "./" else "app_offline.htm"
+              ftp.delete(offline_target)
+              print(f"Eliminado {offline_target} con éxito. IIS reiniciará la aplicación con los nuevos binarios.")
+              ftp.quit()
+          except Exception as e:
+              print(f"Aviso al eliminar app_offline.htm: {e}")
+          EOF
